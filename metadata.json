@@ -1,0 +1,19 @@
+{
+  "KPlugin": {
+    "Id": "com.github.yigitlevent.unifiedsystemmonitor",
+    "Name": "Unified System Monitor",
+    "Description": "A live system monitoring dashboard for KDE Plasma",
+    "Icon": "utilities-system-monitor",
+    "Version": "0.1.0",
+    "License": "MIT",
+    "Category": "System Information",
+    "Website": "https://github.com/yigitlevent/unified-system-monitor",
+    "Authors": [
+      {
+        "Name": "Yiğit Levent"
+      }
+    ]
+  },
+  "KPackageStructure": "Plasma/Applet",
+  "X-Plasma-API-Minimum-Version": "6.0"
+}

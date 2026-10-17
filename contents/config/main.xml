@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name="" />
+  <group name="General">
+    <entry name="processLimit" type="Int">
+      <default>8</default>
+    </entry>
+    <entry name="processCardCols" type="Int">
+      <default>1</default>
+    </entry>
+    <entry name="cpuLabelOverride" type="String">
+      <default></default>
+    </entry>
+    <entry name="gpuLabelOverride" type="String">
+      <default></default>
+    </entry>
+    <entry name="gpuTempSensor" type="String">
+      <default>gpu/gpu0/temperature</default>
+    </entry>
+    <entry name="gpuJunctionSensor" type="String">
+      <default></default>
+    </entry>
+    <entry name="diskId" type="String">
+      <default>all</default>
+    </entry>
+    <entry name="diskLabel" type="String">
+      <default>All disks</default>
+    </entry>
+    <entry name="cardOrder" type="String">
+      <default>cpuUsage,cpuTemp,ram,cores,gpuUsage,gpuCore,gpuJunction,network,disk,processMonitor</default>
+    </entry>
+    <entry name="coreRows" type="Int">
+      <default>2</default>
+    </entry>
+    <entry name="updateInterval" type="Int">
+      <default>1000</default>
+    </entry>
+    <entry name="titleScale" type="Int">
+      <default>100</default>
+    </entry>
+    <entry name="cardTitleScale" type="Int">
+      <default>100</default>
+    </entry>
+    <entry name="valueScale" type="Int">
+      <default>100</default>
+    </entry>
+    <entry name="captionScale" type="Int">
+      <default>100</default>
+    </entry>
+    <entry name="chartLabelScale" type="Int">
+      <default>100</default>
+    </entry>
+    <entry name="panelRadius" type="Int">
+      <default>22</default>
+    </entry>
+    <entry name="cardRadius" type="Int">
+      <default>16</default>
+    </entry>
+    <entry name="hideChartRam" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="hideChartNetwork" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="hideChartDisk" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="panelColor" type="String">
+      <default>#e6090f1c</default>
+    </entry>
+    <entry name="cardColor" type="String">
+      <default>#d90e1729</default>
+    </entry>
+    <entry name="borderColor" type="String">
+      <default>#3a2b3f66</default>
+    </entry>
+    <entry name="textColor" type="String">
+      <default>#ffffff</default>
+    </entry>
+    <entry name="mutedColor" type="String">
+      <default>#9fb0d0</default>
+    </entry>
+    <entry name="cpuColor" type="String">
+      <default>#2f9bff</default>
+    </entry>
+    <entry name="ramColor" type="String">
+      <default>#b366ff</default>
+    </entry>
+    <entry name="gpuColor" type="String">
+      <default>#ff9a3c</default>
+    </entry>
+    <entry name="gpuCoreColor" type="String">
+      <default>#ffb040</default>
+    </entry>
+    <entry name="gpuJunctionColor" type="String">
+      <default>#ff5d6c</default>
+    </entry>
+    <entry name="netDownColor" type="String">
+      <default>#22d3a5</default>
+    </entry>
+    <entry name="netUpColor" type="String">
+      <default>#2f9bff</default>
+    </entry>
+    <entry name="diskReadColor" type="String">
+      <default>#2f9bff</default>
+    </entry>
+    <entry name="diskWriteColor" type="String">
+      <default>#b366ff</default>
+    </entry>
+    <entry name="barLowColor" type="String">
+      <default>#22d3a5</default>
+    </entry>
+    <entry name="barMidColor" type="String">
+      <default>#5be08a</default>
+    </entry>
+    <entry name="barHighColor" type="String">
+      <default>#ffb040</default>
+    </entry>
+    <entry name="hidePanelBorder" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="hideTitleBar" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="cardsPerRow" type="Int">
+      <default>3</default>
+    </entry>
+    <entry name="cpuTempColor" type="String">
+      <default>#59d0ff</default>
+    </entry>
+    <entry name="hideChartCpuUsage" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="hideChartCpuTemp" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="hideChartGpuUsage" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="hideChartGpuCore" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="hideChartGpuJunction" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="outerGap" type="Int">
+      <default>18</default>
+    </entry>
+    <entry name="cardGap" type="Int">
+      <default>13</default>
+    </entry>
+  </group>
+</kcfg>
