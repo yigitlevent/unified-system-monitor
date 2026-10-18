@@ -4,8 +4,6 @@
 var panel = "#e6090f1c";
 var card = "#d90e1729";
 var border = "#3a2b3f66";
-var track = "#99101a2c";
-var trackBorder = "#55334a70";
 
 // Text
 var text = "#ffffff";

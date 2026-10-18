@@ -31,11 +31,6 @@ function pct(v) {
   return Math.round(Number(v) || 0);
 }
 
-function temp(v) {
-  var n = Number(v) || 0;
-  return n > 0 ? Math.round(n) + "°C" : "--";
-}
-
 // "AMD Ryzen 9 5900X 12-Core Processor" -> "Ryzen 9 5900X"
 // "Intel(R) Core(TM) i7-12700K CPU @ 3.60GHz" -> "Core i7-12700K"
 function cleanCpu(name) {

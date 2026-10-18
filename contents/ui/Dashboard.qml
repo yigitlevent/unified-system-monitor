@@ -20,7 +20,6 @@ Item {
     readonly property int cols: Math.max(1, Math.min(6, cfg.cardsPerRow > 0 ? cfg.cardsPerRow : 3))
     readonly property var order: parseOrder(cfg.cardOrder, junctionOn)
     readonly property var gridPlan: buildGridPlan(order, cols, cfg.processCardCols)
-    readonly property int rowCount: gridPlan.rowCount
 
     // Understands the old two-card keys ("cpu", "gpu") too, and appends anything missing.
     function parseOrder(str, junction) {
@@ -118,11 +117,51 @@ Item {
         return placementOf(key).span;
     }
 
+    // Process monitor columns the user switched off
+    readonly property var hiddenProcessColumns: {
+        const hidden = [];
+        if (cfg.hideColPid)
+            hidden.push("pid");
+        if (cfg.hideColUser)
+            hidden.push("user");
+        if (cfg.hideColName)
+            hidden.push("name");
+        if (cfg.hideColCpu)
+            hidden.push("cpu");
+        if (cfg.hideColRam)
+            hidden.push("memory");
+        if (cfg.hideColGpu)
+            hidden.push("gpuUsage");
+        if (cfg.hideColVram)
+            hidden.push("gpuMemory");
+        if (cfg.hideColDown)
+            hidden.push("download");
+        if (cfg.hideColUp)
+            hidden.push("upload");
+        if (cfg.hideColRead)
+            hidden.push("read");
+        if (cfg.hideColWrite)
+            hidden.push("write");
+        return hidden;
+    }
+
     // Logical thread count, read from the system (0 until the sensor reports)
     readonly property int coreRows: cfg.coreRows > 0 ? cfg.coreRows : 2
     readonly property int threads: Math.max(0, Math.round(coreCount.value))
     readonly property string gpuTempId: cfg.gpuTempSensor !== "" ? cfg.gpuTempSensor : "gpu/gpu0/temperature"
-    // CPU model comes from /proc/cpuinfo (read once at startup)
+    // One shared timer drives every sensor sample (Metrics and CoreBars), instead of
+    // one timer each. Paused while the widget is hidden.
+    property int sampleCount: 0
+    Timer {
+        interval: dash.tick
+        repeat: true
+        running: dash.visible
+        triggeredOnStart: true
+        onTriggered: dash.sampleCount++
+    }
+
+    // CPU model comes from /proc/cpuinfo (read once at startup).
+    // KSysGuard has no sensor for the model: cpu/all/name is just "All".
     property string cpuModel: ""
 
     P5Support.DataSource {
@@ -145,44 +184,55 @@ Item {
     // Big-number size: 2 grid units, shrinking a little when the widget is narrow
     readonly property real statSize: Math.max(u * 1.2, Math.min(u * 2.0, ((dash.width - 2 * outerGap - (cols - 1) * cardGap) / cols - u * 1.8) / 10.5))
 
+    // No width/height or Layout.preferred* here on purpose: Plasma re-applies a
+    // preferred size after restoring the saved geometry, which made the widget jump
+    // back to a computed width on every plasmashell restart. The size is whatever
+    // the user (or Plasma's saved geometry) gives it.
     Layout.minimumWidth: 0
     Layout.minimumHeight: 0
-    Layout.preferredWidth: u * (40 + 6 * cols)
-    Layout.preferredHeight: u * (8 + 11.3 * rowCount)
 
     // ---------- Sensors ----------
     Metric {
         id: cpu
         sensorId: "cpu/all/usage"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showCpuUsage
     }
     Metric {
         id: gpuNameSensor
         sensorId: "gpu/gpu0/name"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
         keepHistory: false
     }
     Metric {
         id: coreCount
         sensorId: "cpu/all/coreCount"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
         keepHistory: false
     }
     Metric {
         id: cpuTemp
         sensorId: "cpu/all/averageTemperature"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showCpuTemp
     }
 
     Metric {
         id: ram
         sensorId: "memory/physical/used"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showRam
     }
     Metric {
         id: ramTotal
         sensorId: "memory/physical/total"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
         keepHistory: false
     }
 
@@ -190,38 +240,52 @@ Item {
         id: gpu
         sensorId: "gpu/gpu0/usage"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showGpuUsage
     }
     Metric {
         id: gpuTemp
         sensorId: dash.gpuTempId
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showGpuCore
     }
     Metric {
         id: gpuJunc
         sensorId: dash.cfg.gpuJunctionSensor
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showGpuJunction
     }
 
     Metric {
         id: netDown
         sensorId: "network/all/download"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showNetwork
     }
     Metric {
         id: netUp
         sensorId: "network/all/upload"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showNetwork
     }
 
     Metric {
         id: diskRead
         sensorId: "disk/" + dash.diskKey + "/read"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showDisk
     }
     Metric {
         id: diskWrite
         sensorId: "disk/" + dash.diskKey + "/write"
         interval: dash.tick
+        sampleTrigger: dash.sampleCount
+        keepHistory: uiStyle.showDisk
     }
 
     // ---------- Look & feel (from the settings, with safe fallbacks) ----------
@@ -278,6 +342,7 @@ Item {
 
         // icons follow the text they sit next to
         readonly property real iconSize: Math.round(cardTitleSize * 1.17)
+        readonly property bool showCardIcons: !dash.cfg.hideCardIcons
         readonly property real headerIconSize: Math.round(titleSize * 1.05)
 
         // main box
@@ -332,7 +397,7 @@ Item {
                     implicitWidth: 10
                     implicitHeight: 10
                     radius: 5
-                    color: Theme.teal
+                    color: uiStyle.barLow
                     SequentialAnimation on opacity {
                         loops: Animation.Infinite
                         NumberAnimation {
@@ -365,11 +430,12 @@ Item {
                 // ---- CPU usage ----
                 ChartCard {
                     ui: uiStyle
+                    sampleInterval: dash.tick
                     Layout.row: dash.rowOf("cpuUsage")
                     Layout.column: dash.colOf("cpuUsage")
                     iconName: "cpu"
                     title: "CPU Usage"
-                    subtitle: dash.cpuLabel
+                    subtitle: dash.cfg.hideCpuSubtitle ? "" : dash.cpuLabel
                     showChart: uiStyle.showCpuUsage
                     seriesData: [cpu.history]
                     seriesColors: [uiStyle.cpu]
@@ -382,7 +448,6 @@ Item {
                         ui: uiStyle
                         value: cpu.available ? Format.pct(cpu.value) : "--"
                         unit: cpu.available ? "%" : ""
-                        label: "Total"
                         accent: uiStyle.cpu
                     }
                 }
@@ -390,6 +455,7 @@ Item {
                 // ---- CPU temperature ----
                 ChartCard {
                     ui: uiStyle
+                    sampleInterval: dash.tick
                     Layout.row: dash.rowOf("cpuTemp")
                     Layout.column: dash.colOf("cpuTemp")
                     iconName: "cpu"
@@ -407,7 +473,6 @@ Item {
                         ui: uiStyle
                         value: cpuTemp.available ? Format.tempNumber(cpuTemp.value) : "--"
                         unit: cpuTemp.available ? "°C" : ""
-                        label: "Average"
                         accent: uiStyle.cpuTemp
                     }
                 }
@@ -415,6 +480,7 @@ Item {
                 // ---- RAM ----
                 ChartCard {
                     ui: uiStyle
+                    sampleInterval: dash.tick
                     Layout.row: dash.rowOf("ram")
                     Layout.column: dash.colOf("ram")
                     iconName: "memory"
@@ -430,19 +496,14 @@ Item {
 
                     Stat {
                         ui: uiStyle
-                        value: ram.available ? Format.gib(ram.value).toFixed(1) : "--"
+                        value: ram.available ? Format.gib(ram.value).toFixed(1) + "/" + Math.ceil(Format.gib(ramTotal.value)) : "--"
                         unit: ram.available ? "GB" : ""
-                        label: "Used"
                         accent: uiStyle.ram
-                    }
-                    Divider {
-                        ui: uiStyle
                     }
                     Stat {
                         ui: uiStyle
                         value: ram.available && ramTotal.available && ramTotal.value > 0 ? String(Math.round(ram.value / ramTotal.value * 100)) : "--"
                         unit: ram.available && ramTotal.available && ramTotal.value > 0 ? "%" : ""
-                        label: ramTotal.available ? "of " + Math.round(Format.gib(ramTotal.value)) + " GB" : "Total unavailable"
                         accent: uiStyle.text
                     }
                 }
@@ -476,6 +537,9 @@ Item {
                                 ui: uiStyle
                                 cpuIndex: index
                                 interval: dash.tick
+                                sampleTrigger: dash.sampleCount
+                                midThreshold: dash.cfg.barMidThreshold > 0 ? dash.cfg.barMidThreshold : 50
+                                highThreshold: dash.cfg.barHighThreshold > 0 ? dash.cfg.barHighThreshold : 80
                                 showLabel: coreGrid.height / coreGrid.rowCount > dash.u * 3
                             }
                         }
@@ -485,11 +549,12 @@ Item {
                 // ---- GPU usage ----
                 ChartCard {
                     ui: uiStyle
+                    sampleInterval: dash.tick
                     Layout.row: dash.rowOf("gpuUsage")
                     Layout.column: dash.colOf("gpuUsage")
                     iconName: "video-card"
                     title: "GPU Usage"
-                    subtitle: dash.gpuLabel
+                    subtitle: dash.cfg.hideGpuSubtitle ? "" : dash.gpuLabel
                     showChart: uiStyle.showGpuUsage
                     seriesData: [gpu.history]
                     seriesColors: [uiStyle.gpu]
@@ -502,7 +567,6 @@ Item {
                         ui: uiStyle
                         value: gpu.available ? Format.pct(gpu.value) : "--"
                         unit: gpu.available ? "%" : ""
-                        label: "Utilization"
                         accent: uiStyle.gpu
                     }
                 }
@@ -510,6 +574,7 @@ Item {
                 // ---- GPU core temperature ----
                 ChartCard {
                     ui: uiStyle
+                    sampleInterval: dash.tick
                     Layout.row: dash.rowOf("gpuCore")
                     Layout.column: dash.colOf("gpuCore")
                     iconName: "video-card"
@@ -527,7 +592,6 @@ Item {
                         ui: uiStyle
                         value: gpuTemp.available ? Format.tempNumber(gpuTemp.value) : "--"
                         unit: gpuTemp.available ? "°C" : ""
-                        label: "Core"
                         accent: uiStyle.gpuCore
                     }
                 }
@@ -536,10 +600,11 @@ Item {
                 ChartCard {
                     ui: uiStyle
                     visible: dash.junctionOn
+                    sampleInterval: dash.tick
                     Layout.row: dash.rowOf("gpuJunction")
                     Layout.column: dash.colOf("gpuJunction")
                     iconName: "video-card"
-                    title: "GPU Junction Temp"
+                    title: "GPU Junc Temp"
                     showChart: uiStyle.showGpuJunction
                     seriesData: [gpuJunc.history]
                     seriesColors: [uiStyle.gpuJunction]
@@ -553,7 +618,6 @@ Item {
                         ui: uiStyle
                         value: gpuJunc.available ? Format.tempNumber(gpuJunc.value) : "--"
                         unit: gpuJunc.available ? "°C" : ""
-                        label: "Junction"
                         accent: uiStyle.gpuJunction
                     }
                 }
@@ -561,6 +625,7 @@ Item {
                 // ---- Network ----
                 ChartCard {
                     ui: uiStyle
+                    sampleInterval: dash.tick
                     Layout.row: dash.rowOf("network")
                     Layout.column: dash.colOf("network")
                     iconName: "network-wired"
@@ -578,18 +643,13 @@ Item {
                         arrow: "↓"
                         value: netDown.available ? Format.rate(netDown.value).value : "--"
                         unit: netDown.available ? Format.rate(netDown.value).unit : ""
-                        label: "Download"
                         accent: uiStyle.netDown
-                    }
-                    Divider {
-                        ui: uiStyle
                     }
                     Stat {
                         ui: uiStyle
                         arrow: "↑"
-                        value: Format.rate(netUp.value).value
-                        unit: Format.rate(netUp.value).unit
-                        label: "Upload"
+                        value: netUp.available ? Format.rate(netUp.value).value : "--"
+                        unit: netUp.available ? Format.rate(netUp.value).unit : ""
                         accent: uiStyle.netUp
                     }
                 }
@@ -597,10 +657,11 @@ Item {
                 // ---- Disk ----
                 ChartCard {
                     ui: uiStyle
+                    sampleInterval: dash.tick
                     Layout.row: dash.rowOf("disk")
                     Layout.column: dash.colOf("disk")
                     iconName: "drive-harddisk"
-                    title: "Disk I/O"
+                    title: "Disks"
                     headerRight: dash.cfg.diskLabel
                     showChart: uiStyle.showDisk
                     seriesData: [diskRead.history, diskWrite.history]
@@ -615,18 +676,13 @@ Item {
                         arrow: "↓"
                         value: diskRead.available ? Format.rate(diskRead.value).value : "--"
                         unit: diskRead.available ? Format.rate(diskRead.value).unit : ""
-                        label: "Read"
                         accent: uiStyle.diskRead
-                    }
-                    Divider {
-                        ui: uiStyle
                     }
                     Stat {
                         ui: uiStyle
                         arrow: "↑"
                         value: diskWrite.available ? Format.rate(diskWrite.value).value : "--"
                         unit: diskWrite.available ? Format.rate(diskWrite.value).unit : ""
-                        label: "Write"
                         accent: uiStyle.diskWrite
                     }
                 }
@@ -638,6 +694,13 @@ Item {
                     ui: uiStyle
                     interval: dash.tick
                     processLimit: dash.cfg.processLimit
+                    hiddenColumns: dash.hiddenProcessColumns
+                    sortKey: dash.cfg.processSortKey !== "" ? dash.cfg.processSortKey : "cpu"
+                    sortDescending: dash.cfg.processSortDesc
+                    onSortRequested: function (key, descending) {
+                        Plasmoid.configuration.processSortKey = key;
+                        Plasmoid.configuration.processSortDesc = descending;
+                    }
 
                     Layout.row: dash.rowOf("processMonitor")
                     Layout.column: dash.colOf("processMonitor")

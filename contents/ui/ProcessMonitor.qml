@@ -1,38 +1,254 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
 import org.kde.ksysguard.process as Process
 import "Format.js" as Format
 
-Rectangle {
+CardChrome {
     id: root
 
-    property var ui
+    // `ui` (look & feel, provided by the Dashboard) is inherited from CardChrome
     property int interval: 1000
     property int processLimit: 8
-    property var processes: []
+
+    // Sorting: click a column header. The Dashboard stores the choice in the settings.
+    property string sortKey: "cpu"
+    property bool sortDescending: true
+    signal sortRequested(string key, bool descending)
     property bool loading: true
 
-    // Column proportions add up to 100%, so the table always fits its available width.
-    readonly property var columnWeights: [0.06, 0.1, 0.2, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08]
-    readonly property int columnSpacing: 6
-    readonly property var requestedAttributes: ["pid", "username", "name", "usage", "memory", "gpu_usage", "gpu_memory", "netInbound", "netOutbound", "ioCharactersActuallyReadRate", "ioCharactersActuallyWrittenRate"]
+    // Rows are updated in place (not replaced), so delegates, scroll position and
+    // hover state survive every refresh.
+    ListModel {
+        id: processItems
+    }
+
+    // Every column the table can show. `weight` is its share of the width; the weights of
+    // the columns that are shown are rescaled, so the table always fills its space.
+    // `attr` is the KSysGuard process attribute behind it.
+    readonly property var allColumns: [
+        {
+            key: "pid",
+            label: "PID",
+            weight: 0.06,
+            left: true,
+            attr: "pid"
+        },
+        {
+            key: "user",
+            label: "User",
+            weight: 0.10,
+            left: true,
+            attr: "username"
+        },
+        {
+            key: "name",
+            label: "Process",
+            weight: 0.20,
+            left: true,
+            attr: "name"
+        },
+        {
+            key: "cpu",
+            label: "CPU",
+            weight: 0.08,
+            left: false,
+            attr: "usage"
+        },
+        {
+            key: "memory",
+            label: "RAM",
+            weight: 0.08,
+            left: false,
+            attr: "memory"
+        },
+        {
+            key: "gpuUsage",
+            label: "GPU",
+            weight: 0.08,
+            left: false,
+            attr: "gpu_usage"
+        },
+        {
+            key: "gpuMemory",
+            label: "VRAM",
+            weight: 0.08,
+            left: false,
+            attr: "gpu_memory"
+        },
+        {
+            key: "download",
+            label: "Down",
+            weight: 0.08,
+            left: false,
+            attr: "netInbound"
+        },
+        {
+            key: "upload",
+            label: "Up",
+            weight: 0.08,
+            left: false,
+            attr: "netOutbound"
+        },
+        {
+            key: "read",
+            label: "Read",
+            weight: 0.08,
+            left: false,
+            attr: "ioCharactersActuallyReadRate"
+        },
+        {
+            key: "write",
+            label: "Write",
+            weight: 0.08,
+            left: false,
+            attr: "ioCharactersActuallyWrittenRate"
+        }
+    ]
+
+    // Keys of the columns the user switched off (set by the Dashboard from the settings)
+    property var hiddenColumns: []
+
+    readonly property var columns: allColumns.filter(function (c) {
+        return hiddenColumns.indexOf(c.key) < 0;
+    })
+    readonly property real totalWeight: columns.reduce(function (sum, c) {
+        return sum + c.weight;
+    }, 0)
+
+    // "pid", "name" and "usage" are always read: rows are skipped without a pid or name,
+    // and the list is always sorted by CPU, even if those columns are hidden.
+    readonly property var requestedAttributes: {
+        const wanted = ["pid", "name", "usage"];
+        for (let i = 0; i < columns.length; ++i)
+            if (wanted.indexOf(columns[i].attr) < 0)
+                wanted.push(columns[i].attr);
+        return wanted;
+    }
 
     implicitWidth: 280
     implicitHeight: 300
-    radius: ui.cardRadius
-    color: ui.card
-    border.width: 1
-    border.color: ui.border
 
     function columnWidth(index, availableWidth) {
-        return Math.max(0, availableWidth * columnWeights[index]);
+        if (index >= columns.length || totalWeight <= 0)
+            return 0;
+        return Math.max(0, availableWidth * columns[index].weight / totalWeight);
     }
 
     function columnX(index, availableWidth) {
         let x = 0;
-        for (let i = 0; i < index; ++i)
-            x += availableWidth * columnWeights[i];
+        for (let i = 0; i < index && i < columns.length; ++i)
+            x += columnWidth(i, availableWidth);
         return x;
+    }
+
+    // The column actually sorted by: a hidden column can't be (its data isn't requested),
+    // so fall back to CPU, which is always read.
+    readonly property string activeSortKey: columns.some(function (c) {
+        return c.key === sortKey;
+    }) ? sortKey : "cpu"
+
+    function columnByKey(key) {
+        for (let i = 0; i < allColumns.length; ++i)
+            if (allColumns[i].key === key)
+                return allColumns[i];
+        return allColumns[3];
+    }
+
+    // Field of a refreshed row that a column sorts on
+    function sortField(key) {
+        switch (key) {
+        case "read":
+            return "readRate";
+        case "write":
+            return "writeRate";
+        }
+        return key;
+    }
+
+    function compareRows(a, b) {
+        const field = sortField(activeSortKey);
+        let r;
+        if (typeof a[field] === "string")
+            r = a[field].toLowerCase().localeCompare(b[field].toLowerCase());
+        else
+            r = a[field] - b[field];
+        if (sortDescending)
+            r = -r;
+        // stable tie-break, so equal rows don't jump around between refreshes
+        return r !== 0 ? r : (b.cpu - a.cpu) || (a.pid - b.pid);
+    }
+
+    // Header click: same column flips the direction; a new column starts with the
+    // natural one (text and PID ascending, everything else largest first).
+    function headerClicked(key) {
+        if (key === activeSortKey)
+            sortRequested(key, !sortDescending);
+        else
+            sortRequested(key, !columnByKey(key).left);
+    }
+
+    onSortKeyChanged: if (!loading)
+        refreshProcesses()
+    onSortDescendingChanged: if (!loading)
+        refreshProcesses()
+
+    // Text and colour of one cell, by column key
+    function cellText(key, m) {
+        switch (key) {
+        case "pid":
+            return String(m.pid);
+        case "user":
+            return m.user;
+        case "name":
+            return m.name;
+        case "cpu":
+            return formatPercent(m.cpu, m.cpuAvailable);
+        case "memory":
+            return formatPercent(m.memory, m.memoryAvailable);
+        case "gpuUsage":
+            return formatPercent(m.gpuUsage, m.gpuUsageAvailable);
+        case "gpuMemory":
+            return formatMemory(m.gpuMemory, m.gpuMemoryAvailable);
+        case "download":
+            return formatRate(m.download, m.downloadAvailable).replace(" ", "");
+        case "upload":
+            return formatRate(m.upload, m.uploadAvailable).replace(" ", "");
+        case "read":
+            return formatRate(m.readRate, m.readAvailable).replace(" ", "");
+        case "write":
+            return formatRate(m.writeRate, m.writeAvailable).replace(" ", "");
+        }
+        return "";
+    }
+
+    function cellColor(key) {
+        switch (key) {
+        case "pid":
+        case "user":
+            return ui.muted;
+        case "name":
+            return ui.text;
+        case "cpu":
+            return ui.cpu;
+        case "memory":
+            return ui.ram;
+        case "gpuUsage":
+            return ui.gpu;
+        case "gpuMemory":
+            return ui.gpuCore;
+        case "download":
+            return ui.netDown;
+        case "upload":
+            return ui.netUp;
+        case "read":
+            return ui.diskRead;
+        case "write":
+            return ui.diskWrite;
+        }
+        return ui.text;
     }
 
     Process.ProcessDataModel {
@@ -89,9 +305,6 @@ Rectangle {
     }
 
     function refreshProcesses() {
-        // Replacing an array-backed ListView model resets its scroll position.
-        // Remember the offset and restore it after Qt has updated the delegates.
-        const previousContentY = processList.contentY;
         const updated = [];
 
         for (let row = 0; row < processModel.rowCount(); ++row) {
@@ -134,24 +347,35 @@ Rectangle {
             });
         }
 
-        updated.sort(function (a, b) {
-            return b.cpu - a.cpu;
-        });
-        root.processes = updated.slice(0, Math.max(1, Math.min(50, root.processLimit)));
+        updated.sort(compareRows);
+
+        const shown = updated.slice(0, Math.max(1, Math.min(50, root.processLimit)));
+
+        // Overwrite existing rows, append new ones, drop the leftovers.
+        for (let i = 0; i < shown.length; ++i) {
+            if (i < processItems.count)
+                processItems.set(i, shown[i]);
+            else
+                processItems.append(shown[i]);
+        }
+        if (processItems.count > shown.length)
+            processItems.remove(shown.length, processItems.count - shown.length);
+
         root.loading = false;
+    }
 
-        // Restore immediately to avoid a visible jump to the top.
-        processList.contentY = previousContentY;
+    // Scrollbar helpers: thumb position maps onto the scrollable distance
+    // (contentHeight - viewport height), not the full content height.
+    readonly property real scrollRange: Math.max(1, processList.contentHeight - processList.height)
 
-        // Clamp after the new content height has settled.
-        Qt.callLater(function () {
-            const maxContentY = Math.max(0, processList.contentHeight - processList.height);
-            processList.contentY = Math.max(0, Math.min(previousContentY, maxContentY));
-        });
+    function scrollToTrackY(y, trackHeight, thumbHeight) {
+        const travel = Math.max(1, trackHeight - thumbHeight);
+        const fraction = Math.max(0, Math.min(1, (y - thumbHeight / 2) / travel));
+        processList.contentY = fraction * scrollRange;
     }
 
     Timer {
-        interval: Math.max(1000, root.interval)
+        interval: root.interval
         repeat: true
         running: root.visible
         triggeredOnStart: true
@@ -168,10 +392,12 @@ Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(18, root.ui.cardTitleSize + 2)
             spacing: 6
-            Text {
-                text: "▤"
-                color: root.ui.cpu
-                font.pixelSize: root.ui.iconSize
+            Kirigami.Icon {
+                source: "utilities-system-monitor"
+                fallback: "view-list-details"
+                visible: root.ui.showCardIcons
+                Layout.preferredWidth: root.ui.iconSize
+                Layout.preferredHeight: root.ui.iconSize
             }
             Text {
                 text: "Processes"
@@ -183,7 +409,7 @@ Rectangle {
                 Layout.fillWidth: true
             }
             Text {
-                text: "Sorted by CPU"
+                text: "Sorted by " + root.columnByKey(root.activeSortKey).label
                 color: root.ui.muted
                 font.pixelSize: root.ui.smallSize
             }
@@ -206,21 +432,32 @@ Rectangle {
                 Layout.minimumHeight: 18
 
                 Repeater {
-                    model: ["PID", "User", "Process", "CPU", "RAM", "GPU", "VRAM", "Down", "Up", "Read", "Write"]
+                    model: root.columns
                     delegate: Text {
+                        id: headerCell
                         required property int index
-                        required property string modelData
+                        required property var modelData
+                        readonly property bool active: modelData.key === root.activeSortKey
                         x: root.columnX(index, tableHeader.width)
                         width: root.columnWidth(index, tableHeader.width)
                         height: tableHeader.height
                         leftPadding: 2
                         rightPadding: 2
                         verticalAlignment: Text.AlignVCenter
-                        horizontalAlignment: index < 3 ? Text.AlignLeft : Text.AlignRight
-                        text: modelData
+                        horizontalAlignment: modelData.left ? Text.AlignLeft : Text.AlignRight
+                        text: modelData.label + (active ? (root.sortDescending ? " ▼" : " ▲") : "")
                         elide: Text.ElideRight
-                        color: root.ui.muted
+                        color: (active || headerMouse.containsMouse) ? root.ui.text : root.ui.muted
                         font.pixelSize: root.ui.smallSize
+                        font.weight: active ? Font.DemiBold : Font.Normal
+
+                        MouseArea {
+                            id: headerMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.headerClicked(headerCell.modelData.key)
+                        }
                     }
                 }
             }
@@ -249,72 +486,16 @@ Rectangle {
                 clip: true
                 spacing: 3
                 boundsBehavior: Flickable.StopAtBounds
-                model: root.processes
+                model: processItems
 
                 delegate: Item {
                     id: processRow
-                    required property var modelData
+                    required property var model
                     width: processList.width
                     height: 14
 
                     Repeater {
-                        model: [
-                            {
-                                value: String(processRow.modelData.pid),
-                                color: root.ui.muted,
-                                align: Text.AlignLeft
-                            },
-                            {
-                                value: processRow.modelData.user,
-                                color: root.ui.muted,
-                                align: Text.AlignLeft
-                            },
-                            {
-                                value: processRow.modelData.name,
-                                color: root.ui.text,
-                                align: Text.AlignLeft
-                            },
-                            {
-                                value: root.formatPercent(processRow.modelData.cpu, processRow.modelData.cpuAvailable),
-                                color: root.ui.cpu,
-                                align: Text.AlignRight
-                            },
-                            {
-                                value: root.formatPercent(processRow.modelData.memory, processRow.modelData.memoryAvailable),
-                                color: root.ui.ram,
-                                align: Text.AlignRight
-                            },
-                            {
-                                value: root.formatPercent(processRow.modelData.gpuUsage, processRow.modelData.gpuUsageAvailable),
-                                color: root.ui.gpu,
-                                align: Text.AlignRight
-                            },
-                            {
-                                value: root.formatMemory(processRow.modelData.gpuMemory, processRow.modelData.gpuMemoryAvailable),
-                                color: root.ui.gpuCore,
-                                align: Text.AlignRight
-                            },
-                            {
-                                value: root.formatRate(processRow.modelData.download, processRow.modelData.downloadAvailable).replace(" ", ""),
-                                color: root.ui.netDown,
-                                align: Text.AlignRight
-                            },
-                            {
-                                value: root.formatRate(processRow.modelData.upload, processRow.modelData.uploadAvailable).replace(" ", ""),
-                                color: root.ui.netUp,
-                                align: Text.AlignRight
-                            },
-                            {
-                                value: root.formatRate(processRow.modelData.readRate, processRow.modelData.readAvailable).replace(" ", ""),
-                                color: root.ui.diskRead,
-                                align: Text.AlignRight
-                            },
-                            {
-                                value: root.formatRate(processRow.modelData.writeRate, processRow.modelData.writeAvailable).replace(" ", ""),
-                                color: root.ui.diskWrite,
-                                align: Text.AlignRight
-                            }
-                        ]
+                        model: root.columns
                         delegate: Text {
                             required property int index
                             required property var modelData
@@ -324,9 +505,9 @@ Rectangle {
                             leftPadding: 2
                             rightPadding: 2
                             verticalAlignment: Text.AlignVCenter
-                            text: modelData.value
-                            color: modelData.color
-                            horizontalAlignment: modelData.align
+                            text: root.cellText(modelData.key, processRow.model)
+                            color: root.cellColor(modelData.key)
+                            horizontalAlignment: modelData.left ? Text.AlignLeft : Text.AlignRight
                             elide: Text.ElideLeft
                             font.pixelSize: root.ui.smallSize
                         }
@@ -357,7 +538,7 @@ Rectangle {
                     x: (parent.width - width) / 2
                     width: 8
                     height: Math.min(parent.height, Math.max(22, parent.height * processList.height / Math.max(1, processList.contentHeight)))
-                    y: Math.max(0, Math.min(parent.height - height, processList.contentY / Math.max(1, processList.contentHeight) * parent.height))
+                    y: (parent.height - height) * Math.max(0, Math.min(1, processList.contentY / root.scrollRange))
                     radius: 4
                     color: Qt.rgba(root.ui.text.r, root.ui.text.g, root.ui.text.b, 0.72)
                 }
@@ -366,11 +547,11 @@ Rectangle {
                     enabled: processList.contentHeight > processList.height + 1
                     visible: enabled
                     onPressed: function (mouse) {
-                        processList.contentY = Math.max(0, Math.min(processList.contentHeight - processList.height, mouse.y / Math.max(1, height) * processList.contentHeight - processList.height / 2));
+                        root.scrollToTrackY(mouse.y, height, thumb.height);
                     }
                     onPositionChanged: function (mouse) {
                         if (pressed)
-                            processList.contentY = Math.max(0, Math.min(processList.contentHeight - processList.height, mouse.y / Math.max(1, height) * processList.contentHeight - processList.height / 2));
+                            root.scrollToTrackY(mouse.y, height, thumb.height);
                     }
                 }
             }
@@ -385,7 +566,7 @@ Rectangle {
         }
         Text {
             Layout.fillWidth: true
-            visible: !root.loading && root.processes.length === 0
+            visible: !root.loading && processItems.count === 0
             text: "No process data available"
             color: root.ui.muted
             font.pixelSize: root.ui.smallSize

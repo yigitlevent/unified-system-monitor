@@ -9,7 +9,7 @@ PlasmoidItem {
     preferredRepresentation: fullRepresentation
 
     // We draw our own rounded panel, so drop Plasma's frame
-    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground | PlasmaCore.Types.ConfigurableBackground
+    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
 
     fullRepresentation: Dashboard {}
 }

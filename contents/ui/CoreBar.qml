@@ -12,9 +12,19 @@ ColumnLayout {
     property int interval: 1000
     property bool showLabel: true
 
+    // Bumped by the Dashboard's single shared timer; each bump takes one sample.
+    property int sampleTrigger: 0
+
+    // Usage (%) at which the bar switches colour: low < mid <= usage < high <= usage
+    property real midThreshold: 50
+    property real highThreshold: 80
+
     // Sampled once per `interval`
     property real usage: 0
     property bool available: false
+
+    // Set while the pointer is over the bar; drives the usage tooltip
+    property bool hovered: false
 
     // Width comes from the grid, never from the label, so columns can't overflow the card
     Layout.fillWidth: true
@@ -29,30 +39,27 @@ ColumnLayout {
         updateRateLimit: root.interval
     }
 
-    Timer {
-        interval: root.interval
-        repeat: true
-        running: true
-        triggeredOnStart: true
-        onTriggered: {
-            var raw = sensor.value;
+    function sample() {
+        var raw = sensor.value;
 
-            if (raw === undefined || raw === null) {
-                root.available = false;
-                return;
-            }
-
-            var v = Number(raw);
-
-            if (!isFinite(v)) {
-                root.available = false;
-                return;
-            }
-
-            root.usage = Math.max(0, Math.min(100, v));
-            root.available = true;
+        if (raw === undefined || raw === null) {
+            root.available = false;
+            return;
         }
+
+        var v = Number(raw);
+
+        if (!isFinite(v)) {
+            root.available = false;
+            return;
+        }
+
+        root.usage = Math.max(0, Math.min(100, v));
+        root.available = true;
     }
+
+    onSampleTriggerChanged: sample()
+    Component.onCompleted: sample()
 
     Rectangle {
         id: track
@@ -70,12 +77,45 @@ ColumnLayout {
             anchors.margins: 3
             radius: 3
             height: root.available ? Math.max(3, (track.height - 6) * root.usage / 100) : 0
-            color: root.usage >= 40 ? root.ui.barHigh : root.usage >= 30 ? root.ui.barMid : root.ui.barLow
+            color: root.usage >= root.highThreshold ? root.ui.barHigh : root.usage >= root.midThreshold ? root.ui.barMid : root.ui.barLow
 
             Behavior on height {
                 NumberAnimation {
                     duration: 250
                 }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            onEntered: root.hovered = true
+            onExited: root.hovered = false
+        }
+
+        // Hover tooltip: the core's usage, shown just above the bar. Lives in the track
+        // (a plain Rectangle) so it never takes part in the column layout.
+        Rectangle {
+            id: tooltip
+            z: 2
+            visible: root.hovered && root.available
+            width: tipText.implicitWidth + 14
+            height: tipText.implicitHeight + 8
+            radius: 5
+            color: Qt.rgba(0.06, 0.09, 0.15, 0.96)
+            border.width: 1
+            border.color: root.ui.border
+            // Centred on the bar, clamped to its width
+            x: Math.max(0, Math.min(track.width - width, track.width / 2 - width / 2))
+            y: -height - 4
+
+            Text {
+                id: tipText
+                anchors.centerIn: parent
+                text: Math.round(root.usage) + "%"
+                color: root.ui.text
+                font.family: root.ui.fontFamily
+                font.pixelSize: root.ui.coreLabelSize + 1
             }
         }
     }

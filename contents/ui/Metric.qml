@@ -1,17 +1,17 @@
 import QtQuick
 import org.kde.ksysguard.sensors as Sensors
 
-// A sensor sampled at a fixed interval, with an optional rolling history buffer.
-// `value` and `history` only change once per `interval`, so the whole UI
-// follows the "update interval" setting.
+// A sensor sampled whenever `sampleTrigger` changes, with an optional rolling history
+// buffer. The Dashboard bumps `sampleTrigger` from ONE shared timer, so `value` and
+// `history` only change once per update interval and no per-metric timers are needed.
 Item {
     id: root
 
     property string sensorId: ""
-    property real factor: 1
     property int capacity: 60
     property int interval: 1000
     property bool keepHistory: true
+    property int sampleTrigger: 0
 
     // Latest sampled value (0 while the sensor is unavailable)
     property real value: 0
@@ -48,7 +48,7 @@ Item {
             return;
         }
 
-        root.value = v * root.factor;
+        root.value = v;
         root.available = true;
 
         if (root.keepHistory) {
@@ -60,11 +60,12 @@ Item {
         }
     }
 
-    Timer {
-        interval: root.interval
-        repeat: true
-        running: root.sensorId !== ""
-        triggeredOnStart: true
-        onTriggered: root.sample()
+    onSampleTriggerChanged: sample()
+    Component.onCompleted: sample()
+
+    // Don't hold on to stale data while the history is switched off
+    onKeepHistoryChanged: {
+        if (!keepHistory)
+            root.history = [];
     }
 }

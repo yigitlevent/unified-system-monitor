@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 
 QQC2.SpinBox {
-    from: 50
+    from: 5
     to: 250
     stepSize: 5
     editable: true
