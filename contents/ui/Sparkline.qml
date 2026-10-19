@@ -180,6 +180,7 @@ Item {
     }
     readonly property real axisW: showLabels ? Math.ceil(labelMetrics.advanceWidth) + 6 : 0
 
+    onSeriesDataChanged: cv.requestPaint()
     onAxisChanged: cv.requestPaint()
     onAxisWChanged: cv.requestPaint()
     onSeriesColorsChanged: cv.requestPaint()

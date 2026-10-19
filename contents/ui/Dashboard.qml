@@ -441,8 +441,7 @@ Item {
                     seriesColors: [uiStyle.cpu]
                     capacity: cpu.capacity
                     labelFormatter: Format.percentLabel
-                    maxValue: 0
-                    autoFloor: 20
+                    maxValue: 100
 
                     Stat {
                         ui: uiStyle
@@ -465,9 +464,7 @@ Item {
                     seriesColors: [uiStyle.cpuTemp]
                     capacity: cpuTemp.capacity
                     labelFormatter: Format.tempLabel
-                    maxValue: 0
-                    zoom: true
-                    autoFloor: 10
+                    maxValue: 120
 
                     Stat {
                         ui: uiStyle
@@ -490,9 +487,7 @@ Item {
                     seriesColors: [uiStyle.ram]
                     capacity: ram.capacity
                     labelFormatter: Format.gibLabel
-                    maxValue: 0
-                    zoom: true
-                    autoFloor: 536870912
+                    maxValue: ramTotal.value
 
                     Stat {
                         ui: uiStyle
@@ -560,8 +555,7 @@ Item {
                     seriesColors: [uiStyle.gpu]
                     capacity: gpu.capacity
                     labelFormatter: Format.percentLabel
-                    maxValue: 0
-                    autoFloor: 20
+                    maxValue: 100
 
                     Stat {
                         ui: uiStyle
@@ -584,9 +578,7 @@ Item {
                     seriesColors: [uiStyle.gpuCore]
                     capacity: gpuTemp.capacity
                     labelFormatter: Format.tempLabel
-                    maxValue: 0
-                    zoom: true
-                    autoFloor: 10
+                    maxValue: 120
 
                     Stat {
                         ui: uiStyle
@@ -610,9 +602,7 @@ Item {
                     seriesColors: [uiStyle.gpuJunction]
                     capacity: gpuJunc.capacity
                     labelFormatter: Format.tempLabel
-                    maxValue: 0
-                    zoom: true
-                    autoFloor: 10
+                    maxValue: 120
 
                     Stat {
                         ui: uiStyle
