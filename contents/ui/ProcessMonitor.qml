@@ -494,6 +494,18 @@ CardChrome {
                     width: processList.width
                     height: 14
 
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 3
+                        color: Qt.rgba(root.ui.text.r, root.ui.text.g, root.ui.text.b, 0.08)
+                        opacity: rowMouse.containsMouse ? 1 : 0
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 100
+                            }
+                        }
+                    }
+
                     Repeater {
                         model: root.columns
                         delegate: Text {
@@ -511,6 +523,12 @@ CardChrome {
                             elide: Text.ElideLeft
                             font.pixelSize: root.ui.smallSize
                         }
+                    }
+
+                    MouseArea {
+                        id: rowMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
                     }
                 }
             }
