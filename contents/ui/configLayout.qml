@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
+import "Cards.js" as Cards
 
 KCM.SimpleKCM {
     id: page
@@ -39,19 +40,6 @@ KCM.SimpleKCM {
     // Card order, stored as "cpuUsage,cpuTemp,ram,..."
     property string cfg_cardOrder: ""
 
-    readonly property var cardNames: ({
-            cpuUsage: "CPU Usage",
-            cpuTemp: "CPU Temperature",
-            ram: "RAM",
-            cores: "CPU Cores",
-            gpuUsage: "GPU Usage",
-            gpuCore: "GPU Core Temperature",
-            gpuJunction: "GPU Junction Temperature",
-            network: "Network",
-            disk: "Disk I/O",
-            processMonitor: "Process Monitor"
-        })
-    readonly property var cardKeys: ["cpuUsage", "cpuTemp", "ram", "cores", "gpuUsage", "gpuCore", "gpuJunction", "network", "disk", "processMonitor"]
     property bool busy: false
     readonly property real rowHeight: Kirigami.Units.gridUnit * 2.4
 
@@ -62,32 +50,12 @@ KCM.SimpleKCM {
     function load() {
         busy = true;
         orderModel.clear();
-        // old two-card keys from earlier versions expand to their new cards
-        var legacy = {
-            "cpu": ["cpuUsage", "cpuTemp"],
-            "gpu": ["gpuUsage", "gpuCore", "gpuJunction"]
-        };
-        var seen = {};
-        function add(k) {
-            if (cardNames[k] !== undefined && !seen[k]) {
-                seen[k] = true;
-                orderModel.append({
-                    cardKey: k,
-                    cardName: cardNames[k]
-                });
-            }
-        }
-        var parts = String(cfg_cardOrder || "").split(",");
-        for (let i = 0; i < parts.length; i++) {
-            const k = parts[i].trim();
-            if (legacy[k] !== undefined) {
-                for (let j = 0; j < legacy[k].length; j++)
-                    add(legacy[k][j]);
-            } else
-                add(k);
-        }
-        for (let m = 0; m < cardKeys.length; m++)
-            add(cardKeys[m]);
+        const keys = Cards.parseOrder(cfg_cardOrder);
+        for (let i = 0; i < keys.length; i++)
+            orderModel.append({
+                cardKey: keys[i],
+                cardName: Cards.names[keys[i]]
+            });
         busy = false;
     }
 

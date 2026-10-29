@@ -6,6 +6,7 @@ import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as P5Support
 import "Theme.js" as Theme
+import "Cards.js" as Cards
 import "Format.js" as Format
 
 Item {
@@ -15,36 +16,15 @@ Item {
     // Fallbacks so the widget still works if config defaults are missing/empty
     readonly property int tick: cfg.updateInterval >= 250 ? cfg.updateInterval : 1000
     // ---- Card order + grid ----
-    readonly property var cardKeys: ["cpuUsage", "cpuTemp", "ram", "cores", "gpuUsage", "gpuCore", "gpuJunction", "network", "disk", "processMonitor"]
     readonly property bool junctionOn: cfg.gpuJunctionSensor !== ""
     readonly property int cols: Math.max(1, Math.min(6, cfg.cardsPerRow > 0 ? cfg.cardsPerRow : 3))
     readonly property var order: parseOrder(cfg.cardOrder, junctionOn)
     readonly property var gridPlan: buildGridPlan(order, cols, cfg.processCardCols)
 
-    // Understands the old two-card keys ("cpu", "gpu") too, and appends anything missing.
+    // The junction card only exists when a junction sensor is set
     function parseOrder(str, junction) {
-        var legacy = {
-            "cpu": ["cpuUsage", "cpuTemp"],
-            "gpu": ["gpuUsage", "gpuCore", "gpuJunction"]
-        };
-        var out = [];
-        function add(k) {
-            if (cardKeys.indexOf(k) >= 0 && out.indexOf(k) < 0)
-                out.push(k);
-        }
-        var parts = String(str || "").split(",");
-        for (let i = 0; i < parts.length; i++) {
-            const k = parts[i].trim();
-            if (legacy[k] !== undefined) {
-                for (let j = 0; j < legacy[k].length; j++)
-                    add(legacy[k][j]);
-            } else
-                add(k);
-        }
-        for (let m = 0; m < cardKeys.length; m++)
-            add(cardKeys[m]);
-        // the junction card only exists when a junction sensor is set
-        return junction ? out : out.filter(function (x) {
+        const all = Cards.parseOrder(str);
+        return junction ? all : all.filter(function (x) {
             return x !== "gpuJunction";
         });
     }

@@ -30,185 +30,73 @@ KCM.SimpleKCM {
     property string cfg_barMidColor: ""
     property string cfg_barHighColor: ""
 
+    // One row per colour setting. `key` names both the cfg_<key>Color property
+    // above and its default in Theme.js.
+    readonly property var surfaceFields: [
+        { key: "panel", label: "Main box background:", alpha: true },
+        { key: "card", label: "Card background:", alpha: true },
+        { key: "border", label: "Borders:", alpha: true },
+        { key: "text", label: "Text:", alpha: false },
+        { key: "muted", label: "Secondary text:", alpha: false }
+    ]
+    readonly property var accentFields: [
+        { key: "cpu", label: "CPU usage:", alpha: false },
+        { key: "cpuTemp", label: "CPU temp:", alpha: false },
+        { key: "ram", label: "RAM:", alpha: false },
+        { key: "gpu", label: "GPU usage:", alpha: false },
+        { key: "gpuCore", label: "GPU core temp:", alpha: false },
+        { key: "gpuJunction", label: "GPU junction temp:", alpha: false },
+        { key: "netDown", label: "Download:", alpha: false },
+        { key: "netUp", label: "Upload:", alpha: false },
+        { key: "diskRead", label: "Disk read:", alpha: false },
+        { key: "diskWrite", label: "Disk write:", alpha: false }
+    ]
+    readonly property var barFields: [
+        { key: "barLow", label: "Low load:", alpha: false },
+        { key: "barMid", label: "Medium load:", alpha: false },
+        { key: "barHigh", label: "High load:", alpha: false }
+    ]
+
+    // A colour setting row, built from one entry of the tables above
+    component SettingField: ColorField {
+        required property var modelData
+        readonly property string prop: "cfg_" + modelData.key + "Color"
+
+        Kirigami.FormData.label: modelData.label
+        alpha: modelData.alpha
+        value: page[prop]
+        defaultValue: Theme[modelData.key]
+        onEdited: function (v) {
+            page[prop] = v;
+        }
+    }
+
     Kirigami.FormLayout {
         Item {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: "Surfaces and text"
         }
-
-        ColorField {
-            Kirigami.FormData.label: "Main box background:"
-            alpha: true
-            value: page.cfg_panelColor
-            defaultValue: Theme.panel
-            onEdited: function (v) {
-                page.cfg_panelColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Card background:"
-            alpha: true
-            value: page.cfg_cardColor
-            defaultValue: Theme.card
-            onEdited: function (v) {
-                page.cfg_cardColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Borders:"
-            alpha: true
-            value: page.cfg_borderColor
-            defaultValue: Theme.border
-            onEdited: function (v) {
-                page.cfg_borderColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Text:"
-            alpha: false
-            value: page.cfg_textColor
-            defaultValue: Theme.text
-            onEdited: function (v) {
-                page.cfg_textColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Secondary text:"
-            alpha: false
-            value: page.cfg_mutedColor
-            defaultValue: Theme.muted
-            onEdited: function (v) {
-                page.cfg_mutedColor = v;
-            }
+        Repeater {
+            model: page.surfaceFields
+            delegate: SettingField {}
         }
 
         Item {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: "Accents"
         }
-
-        ColorField {
-            Kirigami.FormData.label: "CPU usage:"
-            alpha: false
-            value: page.cfg_cpuColor
-            defaultValue: Theme.cpu
-            onEdited: function (v) {
-                page.cfg_cpuColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "CPU temp:"
-            alpha: false
-            value: page.cfg_cpuTempColor
-            defaultValue: Theme.cpuTemp
-            onEdited: function (v) {
-                page.cfg_cpuTempColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "RAM:"
-            alpha: false
-            value: page.cfg_ramColor
-            defaultValue: Theme.ram
-            onEdited: function (v) {
-                page.cfg_ramColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "GPU usage:"
-            alpha: false
-            value: page.cfg_gpuColor
-            defaultValue: Theme.gpu
-            onEdited: function (v) {
-                page.cfg_gpuColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "GPU core temp:"
-            alpha: false
-            value: page.cfg_gpuCoreColor
-            defaultValue: Theme.gpuCore
-            onEdited: function (v) {
-                page.cfg_gpuCoreColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "GPU junction temp:"
-            alpha: false
-            value: page.cfg_gpuJunctionColor
-            defaultValue: Theme.gpuJunction
-            onEdited: function (v) {
-                page.cfg_gpuJunctionColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Download:"
-            alpha: false
-            value: page.cfg_netDownColor
-            defaultValue: Theme.netDown
-            onEdited: function (v) {
-                page.cfg_netDownColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Upload:"
-            alpha: false
-            value: page.cfg_netUpColor
-            defaultValue: Theme.netUp
-            onEdited: function (v) {
-                page.cfg_netUpColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Disk read:"
-            alpha: false
-            value: page.cfg_diskReadColor
-            defaultValue: Theme.diskRead
-            onEdited: function (v) {
-                page.cfg_diskReadColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Disk write:"
-            alpha: false
-            value: page.cfg_diskWriteColor
-            defaultValue: Theme.diskWrite
-            onEdited: function (v) {
-                page.cfg_diskWriteColor = v;
-            }
+        Repeater {
+            model: page.accentFields
+            delegate: SettingField {}
         }
 
         Item {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: "CPU core bars"
         }
-
-        ColorField {
-            Kirigami.FormData.label: "Low load:"
-            alpha: false
-            value: page.cfg_barLowColor
-            defaultValue: Theme.barLow
-            onEdited: function (v) {
-                page.cfg_barLowColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "Medium load:"
-            alpha: false
-            value: page.cfg_barMidColor
-            defaultValue: Theme.barMid
-            onEdited: function (v) {
-                page.cfg_barMidColor = v;
-            }
-        }
-        ColorField {
-            Kirigami.FormData.label: "High load:"
-            alpha: false
-            value: page.cfg_barHighColor
-            defaultValue: Theme.barHigh
-            onEdited: function (v) {
-                page.cfg_barHighColor = v;
-            }
+        Repeater {
+            model: page.barFields
+            delegate: SettingField {}
         }
     }
 }
