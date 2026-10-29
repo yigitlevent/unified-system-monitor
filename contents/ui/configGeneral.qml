@@ -67,7 +67,7 @@ KCM.SimpleKCM {
         }
         QQC2.SpinBox {
             id: barHigh
-            from: 1
+            from: barMid.value + 1
             to: 100
             editable: true
             Kirigami.FormData.label: "Core bar high from (%):"

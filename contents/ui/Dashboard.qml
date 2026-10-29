@@ -398,17 +398,7 @@ Item {
                     implicitHeight: 10
                     radius: 5
                     color: uiStyle.barLow
-                    SequentialAnimation on opacity {
-                        loops: Animation.Infinite
-                        NumberAnimation {
-                            to: 0.35
-                            duration: 900
-                        }
-                        NumberAnimation {
-                            to: 1.0
-                            duration: 900
-                        }
-                    }
+                    opacity: dash.sampleCount % 2 === 0 ? 1.0 : 0.35
                 }
                 Text {
                     text: "Live"

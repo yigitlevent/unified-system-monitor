@@ -260,8 +260,19 @@ CardChrome {
         })
     }
 
+    // attribute -> model column. Built once when the attributes change: reading
+    // enabledAttributes copies the whole list, too slow for every cell of every refresh.
+    readonly property var columnIndex: {
+        const index = {};
+        const attributes = processModel.enabledAttributes;
+        for (let i = 0; i < attributes.length; ++i)
+            index[attributes[i]] = i;
+        return index;
+    }
+
     function columnOf(attribute) {
-        return processModel.enabledAttributes.indexOf(attribute);
+        const column = columnIndex[attribute];
+        return column === undefined ? -1 : column;
     }
 
     function readValue(row, attribute) {
@@ -307,7 +318,8 @@ CardChrome {
     function refreshProcesses() {
         const updated = [];
 
-        for (let row = 0; row < processModel.rowCount(); ++row) {
+        const rowCount = processModel.rowCount();
+        for (let row = 0; row < rowCount; ++row) {
             const pid = numberOrNull(readValue(row, "pid"));
             const userValue = readValue(row, "username");
             const nameValue = readValue(row, "name");
