@@ -492,7 +492,7 @@ CardChrome {
                     id: processRow
                     required property var model
                     width: processList.width
-                    height: 14
+                    height: Math.max(14, Math.ceil(root.ui.smallSize * 1.5))
 
                     Rectangle {
                         anchors.fill: parent
