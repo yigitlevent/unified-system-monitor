@@ -35,29 +35,28 @@ Item {
 
     function sample() {
         var raw = sensor.value;
-
-        if (raw === undefined || raw === null) {
-            root.available = false;
-            return;
-        }
-
-        var v = Number(raw);
+        var v = (raw === undefined || raw === null) ? NaN : Number(raw);
 
         if (!isFinite(v)) {
             root.available = false;
+            if (root.history.length > 0)
+                pushHistory(NaN);
             return;
         }
 
         root.value = v;
         root.available = true;
+        pushHistory(v);
+    }
 
-        if (root.keepHistory) {
-            const cap = Math.max(1, Math.round(root.capacity));
-            const h = root.history.slice(Math.max(0, root.history.length - (cap - 1)));
+    function pushHistory(v) {
+        if (!root.keepHistory)
+            return;
+        const cap = Math.max(1, Math.round(root.capacity));
+        const h = root.history.slice(Math.max(0, root.history.length - (cap - 1)));
 
-            h.push(root.value);
-            root.history = h;
-        }
+        h.push(v);
+        root.history = h;
     }
 
     onSampleTriggerChanged: sample()
@@ -68,4 +67,9 @@ Item {
         if (!keepHistory)
             root.history = [];
     }
+
+    // A different sensor or sample spacing makes the old history meaningless: it would
+    // join onto the new line, and the chart's "Xs ago" times assume one fixed interval.
+    onSensorIdChanged: root.history = []
+    onIntervalChanged: root.history = []
 }

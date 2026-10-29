@@ -1,6 +1,9 @@
 name: Release Plasma Widget
 
 on:
+  push:
+    tags: ["v*"]
+  # Manual runs from a branch build a test package only; releases come from v* tags
   workflow_dispatch:
 
 permissions:
@@ -24,7 +27,23 @@ jobs:
         id: package
         shell: bash
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          # metadata.json is the source of truth for the version
+          VERSION="$(jq -r '.KPlugin.Version' metadata.json)"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "::error::metadata.json has no KPlugin.Version"
+            exit 1
+          fi
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            if [ "$GITHUB_REF_NAME" != "v${VERSION}" ]; then
+              echo "::error::Tag ${GITHUB_REF_NAME} does not match metadata.json version ${VERSION} (expected v${VERSION})"
+              exit 1
+            fi
+          else
+            # Not a release: mark the test package with the commit
+            VERSION="${VERSION}-${GITHUB_SHA::7}"
+          fi
+
           ARCHIVE="unified-system-monitor-${VERSION}.plasmoid"
 
           mkdir -p dist

@@ -10,7 +10,6 @@ CardChrome {
     id: root
 
     // `ui` (look & feel, provided by the Dashboard) is inherited from CardChrome
-    property int interval: 1000
     property int processLimit: 8
 
     // Sorting: click a column header. The Dashboard stores the choice in the settings.
@@ -149,6 +148,8 @@ CardChrome {
     readonly property string activeSortKey: columns.some(function (c) {
         return c.key === sortKey;
     }) ? sortKey : "cpu"
+    // ...and the fallback always sorts busiest first, whatever direction the hidden column had
+    readonly property bool activeSortDescending: activeSortKey === sortKey ? sortDescending : true
 
     function columnByKey(key) {
         for (let i = 0; i < allColumns.length; ++i)
@@ -175,7 +176,7 @@ CardChrome {
             r = a[field].toLowerCase().localeCompare(b[field].toLowerCase());
         else
             r = a[field] - b[field];
-        if (sortDescending)
+        if (activeSortDescending)
             r = -r;
         // stable tie-break, so equal rows don't jump around between refreshes
         return r !== 0 ? r : (b.cpu - a.cpu) || (a.pid - b.pid);
@@ -185,7 +186,7 @@ CardChrome {
     // natural one (text and PID ascending, everything else largest first).
     function headerClicked(key) {
         if (key === activeSortKey)
-            sortRequested(key, !sortDescending);
+            sortRequested(key, !activeSortDescending);
         else
             sortRequested(key, !columnByKey(key).left);
     }
@@ -373,7 +374,9 @@ CardChrome {
         if (processItems.count > shown.length)
             processItems.remove(shown.length, processItems.count - shown.length);
 
-        root.loading = false;
+        // An empty model just means its first update hasn't arrived yet
+        if (rowCount > 0)
+            root.loading = false;
     }
 
     // Scrollbar helpers: thumb position maps onto the scrollable distance
@@ -386,12 +389,25 @@ CardChrome {
         processList.contentY = fraction * scrollRange;
     }
 
-    Timer {
-        interval: root.interval
-        repeat: true
-        running: root.visible
-        triggeredOnStart: true
-        onTriggered: root.refreshProcesses()
+    // Refresh when the model has new data (it updates itself every ~2 s). It sends a
+    // signal per changed row; Qt.callLater folds each burst into one refresh.
+    // The first update can be up to ~2 s away; read whatever the model has right away
+    Component.onCompleted: Qt.callLater(root.refreshProcesses)
+
+    Connections {
+        target: processModel
+        function onDataChanged() {
+            Qt.callLater(root.refreshProcesses);
+        }
+        function onRowsInserted() {
+            Qt.callLater(root.refreshProcesses);
+        }
+        function onRowsRemoved() {
+            Qt.callLater(root.refreshProcesses);
+        }
+        function onModelReset() {
+            Qt.callLater(root.refreshProcesses);
+        }
     }
 
     ColumnLayout {
@@ -457,7 +473,7 @@ CardChrome {
                         rightPadding: 2
                         verticalAlignment: Text.AlignVCenter
                         horizontalAlignment: modelData.left ? Text.AlignLeft : Text.AlignRight
-                        text: modelData.label + (active ? (root.sortDescending ? " ▼" : " ▲") : "")
+                        text: modelData.label + (active ? (root.activeSortDescending ? " ▼" : " ▲") : "")
                         elide: Text.ElideRight
                         color: (active || headerMouse.containsMouse) ? root.ui.text : root.ui.muted
                         font.pixelSize: root.ui.smallSize
@@ -532,7 +548,7 @@ CardChrome {
                             text: root.cellText(modelData.key, processRow.model)
                             color: root.cellColor(modelData.key)
                             horizontalAlignment: modelData.left ? Text.AlignLeft : Text.AlignRight
-                            elide: Text.ElideLeft
+                            elide: modelData.left ? Text.ElideRight : Text.ElideLeft
                             font.pixelSize: root.ui.smallSize
                         }
                     }

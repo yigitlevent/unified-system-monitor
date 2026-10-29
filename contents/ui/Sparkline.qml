@@ -21,7 +21,6 @@ Item {
     property var seriesColors: []   // ["#2f9bff", ...]
     property real maxValue: 100     // > 0 = fixed 0..max scale, <= 0 = auto scale
     property real autoFloor: 1      // auto mode: minimum size of the visible range
-    property bool zoom: false       // auto mode: fit min..max instead of 0..max
     property int capacity: 60
 
     property bool showGrid: true
@@ -54,24 +53,14 @@ Item {
         var hi = maxValue;
         if (hi <= 0) {
             let mx = 0;
-            let mn = Infinity;
             for (let a = 0; a < seriesData.length; a++) {
                 for (let b = 0; b < seriesData[a].length; b++) {
-                    mx = Math.max(mx, seriesData[a][b]);
-                    mn = Math.min(mn, seriesData[a][b]);
+                    const v = seriesData[a][b];
+                    if (isFinite(v))   // skip gaps (sensor had no reading)
+                        mx = Math.max(mx, v);
                 }
             }
-            if (mn === Infinity)
-                mn = 0;
-
-            if (zoom) {
-                const range = Math.max(mx - mn, autoFloor);
-                const step = Format.niceStep(range * 1.5 / 4);
-                lo = Math.max(0, Math.floor(mn / step) * step);
-                hi = lo + 4 * step;
-            } else {
-                hi = Format.niceCeil(mx * 1.1, autoFloor);
-            }
+            hi = Format.niceCeil(mx * 1.1, autoFloor);
         }
         if (hi <= lo)
             hi = lo + 1;
@@ -118,7 +107,7 @@ Item {
         for (let s = 0; s < seriesData.length; s++) {
             const d = seriesData[s];
             const idx = d.length - 1 - k;
-            if (idx < 0)
+            if (idx < 0 || !isFinite(d[idx]))
                 continue;
             rows.push({
                 color: String(seriesColors[s] || "#ffffff"),
@@ -156,7 +145,7 @@ Item {
         for (let s = 0; s < seriesData.length; s++) {
             const d = seriesData[s];
             const idx = d.length - 1 - k;
-            if (idx < 0)
+            if (idx < 0 || !isFinite(d[idx]))
                 continue;
             const v = Math.min(Math.max(d[idx], axis.lo), axis.hi);
             best = Math.min(best, plotBot - ((v - axis.lo) / (axis.hi - axis.lo)) * plotH);
@@ -249,36 +238,50 @@ Item {
                 if (n < 2)
                     continue;
                 const col = String(chart.seriesColors[s] || "#ffffff");
-
-                const xs = [], ys = [];
-                for (let i = 0; i < n; i++) {
-                    const v = Math.min(Math.max(d[i], lo), hi);
-                    xs.push(W - (n - 1 - i) * stepX);
-                    ys.push(plotBot - ((v - lo) / (hi - lo)) * plotH);
-                }
-
-                // Fill
                 const grad = ctx.createLinearGradient(0, plotTop, 0, plotBot);
                 grad.addColorStop(0, Format.rgba(col, 0.38));
                 grad.addColorStop(1, Format.rgba(col, 0.02));
-                ctx.beginPath();
-                ctx.moveTo(xs[0], plotBot);
-                for (let f = 0; f < n; f++)
-                    ctx.lineTo(xs[f], ys[f]);
-                ctx.lineTo(xs[n - 1], plotBot);
-                ctx.closePath();
-                ctx.fillStyle = grad;
-                ctx.fill();
 
-                // Line
-                ctx.beginPath();
-                ctx.moveTo(xs[0], ys[0]);
-                for (let l = 1; l < n; l++)
-                    ctx.lineTo(xs[l], ys[l]);
-                ctx.lineWidth = 2;
-                ctx.lineJoin = "round";
-                ctx.strokeStyle = col;
-                ctx.stroke();
+                // Gaps (NaN) split the series into runs; each run gets its own fill and line
+                let xs = [], ys = [];
+                for (let i = 0; i <= n; i++) {
+                    if (i < n && isFinite(d[i])) {
+                        const v = Math.min(Math.max(d[i], lo), hi);
+                        xs.push(W - (n - 1 - i) * stepX);
+                        ys.push(plotBot - ((v - lo) / (hi - lo)) * plotH);
+                        continue;
+                    }
+                    const m = xs.length;
+                    if (m >= 2) {
+                        // Fill
+                        ctx.beginPath();
+                        ctx.moveTo(xs[0], plotBot);
+                        for (let f = 0; f < m; f++)
+                            ctx.lineTo(xs[f], ys[f]);
+                        ctx.lineTo(xs[m - 1], plotBot);
+                        ctx.closePath();
+                        ctx.fillStyle = grad;
+                        ctx.fill();
+
+                        // Line
+                        ctx.beginPath();
+                        ctx.moveTo(xs[0], ys[0]);
+                        for (let l = 1; l < m; l++)
+                            ctx.lineTo(xs[l], ys[l]);
+                        ctx.lineWidth = 2;
+                        ctx.lineJoin = "round";
+                        ctx.strokeStyle = col;
+                        ctx.stroke();
+                    } else if (m === 1) {
+                        // A lone reading between two gaps: a dot, as there's no line to draw
+                        ctx.beginPath();
+                        ctx.arc(xs[0], ys[0], 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = col;
+                        ctx.fill();
+                    }
+                    xs = [];
+                    ys = [];
+                }
             }
 
             // ---- hover: guide line + a marker on each series' point ----
@@ -297,7 +300,7 @@ Item {
                     for (let s = 0; s < chart.seriesData.length; s++) {
                         const d = chart.seriesData[s];
                         const idx = d.length - 1 - k;
-                        if (idx < 0)
+                        if (idx < 0 || !isFinite(d[idx]))
                             continue;
                         const v = Math.min(Math.max(d[idx], lo), hi);
                         const dy = plotBot - ((v - lo) / (hi - lo)) * plotH;

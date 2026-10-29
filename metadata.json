@@ -4,7 +4,7 @@
     "Name": "Unified System Monitor",
     "Description": "A live system monitoring dashboard for KDE Plasma",
     "Icon": "utilities-system-monitor",
-    "Version": "0.1.0",
+    "Version": "0.2.0",
     "License": "MIT",
     "Category": "System Information",
     "Website": "https://github.com/yigitlevent/unified-system-monitor",

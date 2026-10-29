@@ -23,7 +23,6 @@ Item {
     property int capacity: 60
     property real maxValue: 0
     property real autoFloor: 1
-    property bool zoom: false
     // ms between samples; the chart's hover tooltip uses it for the "Xs ago" label
     property int sampleInterval: 1000
 
@@ -50,7 +49,6 @@ Item {
             capacity: root.capacity
             maxValue: root.maxValue
             autoFloor: root.autoFloor
-            zoom: root.zoom
             sampleInterval: root.sampleInterval
         }
     }

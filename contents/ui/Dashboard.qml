@@ -128,7 +128,9 @@ Item {
     // Logical thread count, read from the system (0 until the sensor reports)
     readonly property int coreRows: cfg.coreRows > 0 ? cfg.coreRows : 2
     readonly property int threads: Math.max(0, Math.round(coreCount.value))
-    readonly property string gpuTempId: cfg.gpuTempSensor !== "" ? cfg.gpuTempSensor : "gpu/gpu0/temperature"
+    // Sensors of the GPU picked in the settings (gpu0, gpu1, ...)
+    readonly property string gpuPrefix: "gpu/gpu" + (cfg.gpuIndex > 0 ? cfg.gpuIndex : 0) + "/"
+    readonly property string gpuTempId: cfg.gpuTempSensor !== "" ? cfg.gpuTempSensor : gpuPrefix + "temperature"
     // One shared timer drives every sensor sample (Metrics and CoreBars), instead of
     // one timer each. Paused while the widget is hidden.
     property int sampleCount: 0
@@ -181,7 +183,7 @@ Item {
     }
     Metric {
         id: gpuNameSensor
-        sensorId: "gpu/gpu0/name"
+        sensorId: dash.gpuPrefix + "name"
         interval: dash.tick
         sampleTrigger: dash.sampleCount
         keepHistory: false
@@ -218,7 +220,7 @@ Item {
 
     Metric {
         id: gpu
-        sensorId: "gpu/gpu0/usage"
+        sensorId: dash.gpuPrefix + "usage"
         interval: dash.tick
         sampleTrigger: dash.sampleCount
         keepHistory: uiStyle.showGpuUsage
@@ -439,7 +441,7 @@ Item {
                     Stat {
                         ui: uiStyle
                         value: cpuTemp.available ? Format.tempNumber(cpuTemp.value) : "--"
-                        unit: cpuTemp.available ? "°C" : ""
+                        unit: cpuTemp.available && Format.hasTemp(cpuTemp.value) ? "°C" : ""
                         accent: uiStyle.cpuTemp
                     }
                 }
@@ -457,11 +459,11 @@ Item {
                     seriesColors: [uiStyle.ram]
                     capacity: ram.capacity
                     labelFormatter: Format.gbLabel
-                    maxValue: ramTotal.value
+                    maxValue: Format.installedGb(ramTotal.value) * 1073741824
 
                     Stat {
                         ui: uiStyle
-                        value: ram.available ? Format.gb(ram.value).toFixed(1) + "/" + Format.installedGb(ramTotal.value) : "--"
+                        value: ram.available ? Format.gb(ram.value).toFixed(1) + (ramTotal.available && ramTotal.value > 0 ? "/" + Format.installedGb(ramTotal.value) : "") : "--"
                         unit: ram.available ? "GB" : ""
                         accent: uiStyle.ram
                     }
@@ -482,7 +484,7 @@ Item {
                     Layout.column: dash.colOf("cores")
                     iconName: "cpu"
                     title: "CPU Cores"
-                    headerRight: dash.threads + " logical threads"
+                    headerRight: dash.threads > 0 ? dash.threads + " logical threads" : ""
 
                     GridLayout {
                         id: coreGrid
@@ -553,7 +555,7 @@ Item {
                     Stat {
                         ui: uiStyle
                         value: gpuTemp.available ? Format.tempNumber(gpuTemp.value) : "--"
-                        unit: gpuTemp.available ? "°C" : ""
+                        unit: gpuTemp.available && Format.hasTemp(gpuTemp.value) ? "°C" : ""
                         accent: uiStyle.gpuCore
                     }
                 }
@@ -577,7 +579,7 @@ Item {
                     Stat {
                         ui: uiStyle
                         value: gpuJunc.available ? Format.tempNumber(gpuJunc.value) : "--"
-                        unit: gpuJunc.available ? "°C" : ""
+                        unit: gpuJunc.available && Format.hasTemp(gpuJunc.value) ? "°C" : ""
                         accent: uiStyle.gpuJunction
                     }
                 }
@@ -652,7 +654,6 @@ Item {
                     id: processMonitor
 
                     ui: uiStyle
-                    interval: dash.tick
                     processLimit: dash.cfg.processLimit
                     hiddenColumns: dash.hiddenProcessColumns
                     sortKey: dash.cfg.processSortKey !== "" ? dash.cfg.processSortKey : "cpu"

@@ -11,15 +11,16 @@ function rgba(hex, a) {
 }
 
 // bytes/second -> { value: "12.4", unit: "MB/s" }
+// Steps up a unit once the number would round to 1000, so 999.96 KB/s reads
+// "1.0 MB/s", not "1000 KB/s".
 function rate(bps) {
-  var v = Number(bps) || 0;
-  var n, u;
-  if (v >= 1e9) { n = v / 1e9; u = "GB/s"; }
-  else if (v >= 1e6) { n = v / 1e6; u = "MB/s"; }
-  else if (v >= 1e3) { n = v / 1e3; u = "KB/s"; }
-  else { n = v; u = "B/s"; }
-  var s = (n >= 100 || u === "B/s") ? Math.round(n).toString() : n.toFixed(1);
-  return { value: s, unit: u };
+  var units = ["B/s", "KB/s", "MB/s", "GB/s"];
+  var n = Number(bps) || 0;
+  var i = 0;
+  while (n >= 999.5 && i < units.length - 1) { n /= 1000; i++; }
+  // whole numbers from 100 up ("100.0" would be one digit too many)
+  var s = (i === 0 || n >= 99.95) ? Math.round(n).toString() : n.toFixed(1);
+  return { value: s, unit: units[i] };
 }
 
 // bytes -> GB number. Memory uses 1024-based GB, like RAM sticks and Task Manager
@@ -39,10 +40,12 @@ function pct(v) {
 }
 
 // "AMD Ryzen 9 5900X 12-Core Processor" -> "Ryzen 9 5900X"
-// "Intel(R) Core(TM) i7-12700K CPU @ 3.60GHz" -> "Core i7-12700K"
+// "Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz" -> "Core i7-8700K"
+// "12th Gen Intel(R) Core(TM) i7-12700K" -> "Core i7-12700K"
 function cleanCpu(name) {
   var s = String(name || "");
   s = s.replace(/\((R|TM|r|tm)\)/g, "");
+  s = s.replace(/^\s*\d+(st|nd|rd|th) Gen\s+/i, "");
   s = s.replace(/@.*$/, "");
   s = s.replace(/\b\d+-Core Processor\b/i, "");
   s = s.replace(/\b(CPU|Processor)\b/gi, "");
@@ -108,17 +111,6 @@ function niceCeil(v, floor) {
   return 10 * mag;
 }
 
-// Tidy step size (1, 2, 2.5, 5, 10 x 10^k) that is >= x.
-function niceStep(x) {
-  if (!(x > 0)) return 1;
-  var mag = Math.pow(10, Math.floor(Math.log(x) / Math.LN10));
-  var r = x / mag;
-  var c = [1, 2, 2.5, 5, 10];
-  for (var i = 0; i < c.length; i++)
-    if (c[i] >= r - 1e-9) return c[i] * mag;
-  return 10 * mag;
-}
-
 function trim1(n) {
   var r = Math.round(n * 10) / 10;
   return (r % 1 === 0) ? String(r) : r.toFixed(1);
@@ -130,8 +122,12 @@ function tempLabel(v) { return trim1(v) + "°C"; }
 function gbLabel(v) { return trim1(gb(v)) + " GB"; }
 function rateLabel(v) { var r = rate(v); return String(parseFloat(r.value)) + " " + r.unit; }
 
+// Sensors report 0 when they have no reading, so only > 0 counts as a temperature
+function hasTemp(v) {
+  return (Number(v) || 0) > 0;
+}
+
 // Temperature as a bare number ("52") or "--" when the sensor has no reading
 function tempNumber(v) {
-  var n = Number(v) || 0;
-  return n > 0 ? String(Math.round(n)) : "--";
+  return hasTemp(v) ? String(Math.round(Number(v))) : "--";
 }

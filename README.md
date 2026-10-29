@@ -35,8 +35,9 @@ Right-click the widget -> **Configure**. Sensor IDs differ between machines. Ope
 
 | Setting | Default |
 | --- | --- |
-| GPU core temp | `gpu/gpu0/temperature` |
+| GPU number | `0` -> the `gpu/gpu0/...` sensors; set `1` for `gpu1` on a second GPU (e.g. dGPU next to an iGPU) |
+| GPU core temp | *(empty)* -> `gpu/gpuN/temperature` of the chosen GPU |
 | GPU junction temp | *(empty — set it to your amdgpu hwmon sensor)* |
 | Disk | `all` -> `disk/all/read` / `disk/all/write`; use a device id for a single drive |
-| CPU / GPU label | Detected from `/proc/cpuinfo` (CPU) and the `gpu/gpu0/name` sensor (GPU); use *Custom CPU/GPU label* in settings to override |
+| CPU / GPU label | Detected from `/proc/cpuinfo` (CPU) and the `gpu/gpuN/name` sensor (GPU); use *Custom CPU/GPU label* in settings to override |
 | Logical threads | Detected automatically from `cpu/all/coreCount`, then one bar per `cpu/cpuN/usage` |

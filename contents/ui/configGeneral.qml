@@ -15,6 +15,7 @@ KCM.SimpleKCM {
     property alias cfg_barMidThreshold: barMid.value
     property alias cfg_barHighThreshold: barHigh.value
     property alias cfg_gpuLabelOverride: gpuOverride.text
+    property alias cfg_gpuIndex: gpuIndex.value
     property alias cfg_gpuTempSensor: gpuTemp.text
     property alias cfg_gpuJunctionSensor: gpuJunction.text
     property alias cfg_diskId: diskId.text
@@ -84,6 +85,18 @@ KCM.SimpleKCM {
             checked: !page.cfg_hideGpuSubtitle
             onToggled: page.cfg_hideGpuSubtitle = !checked
         }
+        QQC2.SpinBox {
+            id: gpuIndex
+            from: 0
+            to: 7
+            editable: true
+            Kirigami.FormData.label: "GPU number:"
+        }
+        QQC2.Label {
+            text: "Which GPU to show: 0 = gpu0, 1 = gpu1, ... (see System Monitor -> Sensors)"
+            font: Kirigami.Theme.smallFont
+            opacity: 0.7
+        }
         QQC2.TextField {
             id: gpuOverride
             Layout.minimumWidth: Kirigami.Units.gridUnit * 20
@@ -93,6 +106,7 @@ KCM.SimpleKCM {
         QQC2.TextField {
             id: gpuTemp
             Layout.minimumWidth: Kirigami.Units.gridUnit * 20
+            placeholderText: "gpu/gpu" + gpuIndex.value + "/temperature (empty = this)"
             Kirigami.FormData.label: "Core temp sensor ID:"
         }
         QQC2.TextField {

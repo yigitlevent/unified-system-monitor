@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import org.kde.kirigami as Kirigami
 import org.kde.ksysguard.sensors as Sensors
 
 // One vertical usage bar for a single logical CPU thread.
@@ -83,7 +82,7 @@ ColumnLayout {
 
             Behavior on height {
                 NumberAnimation {
-                    duration: 250
+                    duration: 100
                 }
             }
         }
