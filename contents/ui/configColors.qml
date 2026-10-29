@@ -91,7 +91,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "CPU usage:"
             alpha: false
             value: page.cfg_cpuColor
-            defaultValue: Theme.blue
+            defaultValue: Theme.cpu
             onEdited: function (v) {
                 page.cfg_cpuColor = v;
             }
@@ -100,7 +100,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "CPU temp:"
             alpha: false
             value: page.cfg_cpuTempColor
-            defaultValue: Theme.sky
+            defaultValue: Theme.cpuTemp
             onEdited: function (v) {
                 page.cfg_cpuTempColor = v;
             }
@@ -109,7 +109,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "RAM:"
             alpha: false
             value: page.cfg_ramColor
-            defaultValue: Theme.purple
+            defaultValue: Theme.ram
             onEdited: function (v) {
                 page.cfg_ramColor = v;
             }
@@ -118,7 +118,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "GPU usage:"
             alpha: false
             value: page.cfg_gpuColor
-            defaultValue: Theme.orange
+            defaultValue: Theme.gpu
             onEdited: function (v) {
                 page.cfg_gpuColor = v;
             }
@@ -127,7 +127,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "GPU core temp:"
             alpha: false
             value: page.cfg_gpuCoreColor
-            defaultValue: Theme.amber
+            defaultValue: Theme.gpuCore
             onEdited: function (v) {
                 page.cfg_gpuCoreColor = v;
             }
@@ -136,7 +136,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "GPU junction temp:"
             alpha: false
             value: page.cfg_gpuJunctionColor
-            defaultValue: Theme.red
+            defaultValue: Theme.gpuJunction
             onEdited: function (v) {
                 page.cfg_gpuJunctionColor = v;
             }
@@ -145,7 +145,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "Download:"
             alpha: false
             value: page.cfg_netDownColor
-            defaultValue: Theme.teal
+            defaultValue: Theme.netDown
             onEdited: function (v) {
                 page.cfg_netDownColor = v;
             }
@@ -154,7 +154,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "Upload:"
             alpha: false
             value: page.cfg_netUpColor
-            defaultValue: Theme.blue
+            defaultValue: Theme.netUp
             onEdited: function (v) {
                 page.cfg_netUpColor = v;
             }
@@ -163,7 +163,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "Disk read:"
             alpha: false
             value: page.cfg_diskReadColor
-            defaultValue: Theme.blue
+            defaultValue: Theme.diskRead
             onEdited: function (v) {
                 page.cfg_diskReadColor = v;
             }
@@ -172,7 +172,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "Disk write:"
             alpha: false
             value: page.cfg_diskWriteColor
-            defaultValue: Theme.purple
+            defaultValue: Theme.diskWrite
             onEdited: function (v) {
                 page.cfg_diskWriteColor = v;
             }
@@ -187,7 +187,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "Low load:"
             alpha: false
             value: page.cfg_barLowColor
-            defaultValue: Theme.teal
+            defaultValue: Theme.barLow
             onEdited: function (v) {
                 page.cfg_barLowColor = v;
             }
@@ -196,7 +196,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "Medium load:"
             alpha: false
             value: page.cfg_barMidColor
-            defaultValue: Theme.green
+            defaultValue: Theme.barMid
             onEdited: function (v) {
                 page.cfg_barMidColor = v;
             }
@@ -205,7 +205,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: "High load:"
             alpha: false
             value: page.cfg_barHighColor
-            defaultValue: Theme.amber
+            defaultValue: Theme.barHigh
             onEdited: function (v) {
                 page.cfg_barHighColor = v;
             }

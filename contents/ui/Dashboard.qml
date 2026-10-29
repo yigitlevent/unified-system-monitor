@@ -309,19 +309,19 @@ Item {
         readonly property color trackBorder: Qt.rgba(text.r, text.g, text.b, 0.12)
 
         // accents
-        readonly property color cpu: pick(dash.cfg.cpuColor, Theme.blue)
-        readonly property color cpuTemp: pick(dash.cfg.cpuTempColor, Theme.sky)
-        readonly property color ram: pick(dash.cfg.ramColor, Theme.purple)
-        readonly property color gpu: pick(dash.cfg.gpuColor, Theme.orange)
-        readonly property color gpuCore: pick(dash.cfg.gpuCoreColor, Theme.amber)
-        readonly property color gpuJunction: pick(dash.cfg.gpuJunctionColor, Theme.red)
-        readonly property color netDown: pick(dash.cfg.netDownColor, Theme.teal)
-        readonly property color netUp: pick(dash.cfg.netUpColor, Theme.blue)
-        readonly property color diskRead: pick(dash.cfg.diskReadColor, Theme.blue)
-        readonly property color diskWrite: pick(dash.cfg.diskWriteColor, Theme.purple)
-        readonly property color barLow: pick(dash.cfg.barLowColor, Theme.teal)
-        readonly property color barMid: pick(dash.cfg.barMidColor, Theme.green)
-        readonly property color barHigh: pick(dash.cfg.barHighColor, Theme.amber)
+        readonly property color cpu: pick(dash.cfg.cpuColor, Theme.cpu)
+        readonly property color cpuTemp: pick(dash.cfg.cpuTempColor, Theme.cpuTemp)
+        readonly property color ram: pick(dash.cfg.ramColor, Theme.ram)
+        readonly property color gpu: pick(dash.cfg.gpuColor, Theme.gpu)
+        readonly property color gpuCore: pick(dash.cfg.gpuCoreColor, Theme.gpuCore)
+        readonly property color gpuJunction: pick(dash.cfg.gpuJunctionColor, Theme.gpuJunction)
+        readonly property color netDown: pick(dash.cfg.netDownColor, Theme.netDown)
+        readonly property color netUp: pick(dash.cfg.netUpColor, Theme.netUp)
+        readonly property color diskRead: pick(dash.cfg.diskReadColor, Theme.diskRead)
+        readonly property color diskWrite: pick(dash.cfg.diskWriteColor, Theme.diskWrite)
+        readonly property color barLow: pick(dash.cfg.barLowColor, Theme.barLow)
+        readonly property color barMid: pick(dash.cfg.barMidColor, Theme.barMid)
+        readonly property color barHigh: pick(dash.cfg.barHighColor, Theme.barHigh)
 
         // shape
         readonly property real panelRadius: dash.cfg.panelRadius
