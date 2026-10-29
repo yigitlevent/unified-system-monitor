@@ -22,9 +22,16 @@ function rate(bps) {
   return { value: s, unit: u };
 }
 
-// bytes -> GiB number
-function gib(bytes) {
+// bytes -> GB number. Memory uses 1024-based GB, like RAM sticks and Task Manager
+// (a 16 GB module is 16 x 1024^3 bytes); rates above stay decimal.
+function gb(bytes) {
   return (Number(bytes) || 0) / 1073741824;
+}
+
+// Usable RAM (bytes) -> installed size in GB. The kernel keeps a little memory back,
+// so 64 GB installed reports ~62.4 GB usable; rounding up to even gives 64 again.
+function installedGb(bytes) {
+  return Math.ceil(gb(bytes) / 2) * 2;
 }
 
 function pct(v) {
@@ -120,7 +127,7 @@ function trim1(n) {
 // Axis label formatters (used by Sparkline.labelFormatter)
 function percentLabel(v) { return trim1(v) + "%"; }
 function tempLabel(v) { return trim1(v) + "°C"; }
-function gibLabel(v) { return trim1((Number(v) || 0) / 1073741824) + " GiB"; }
+function gbLabel(v) { return trim1(gb(v)) + " GB"; }
 function rateLabel(v) { var r = rate(v); return String(parseFloat(r.value)) + " " + r.unit; }
 
 // Temperature as a bare number ("52") or "--" when the sensor has no reading

@@ -486,12 +486,12 @@ Item {
                     seriesData: [ram.history]
                     seriesColors: [uiStyle.ram]
                     capacity: ram.capacity
-                    labelFormatter: Format.gibLabel
+                    labelFormatter: Format.gbLabel
                     maxValue: ramTotal.value
 
                     Stat {
                         ui: uiStyle
-                        value: ram.available ? Format.gib(ram.value).toFixed(1) + "/" + Math.ceil(Format.gib(ramTotal.value)) : "--"
+                        value: ram.available ? Format.gb(ram.value).toFixed(1) + "/" + Format.installedGb(ramTotal.value) : "--"
                         unit: ram.available ? "GB" : ""
                         accent: uiStyle.ram
                     }

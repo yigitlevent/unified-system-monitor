@@ -25,6 +25,8 @@ ColumnLayout {
 
     // Set while the pointer is over the bar; drives the usage tooltip
     property bool hovered: false
+    // Lift the hovered bar so its tooltip isn't drawn under the neighbouring bars
+    z: hovered ? 1 : 0
 
     // Width comes from the grid, never from the label, so columns can't overflow the card
     Layout.fillWidth: true

@@ -299,9 +299,9 @@ CardChrome {
     function formatMemory(value, available) {
         if (!available)
             return "—";
-        // KDE's process memory attributes are reported in KiB.
-        const mib = Math.max(0, Number(value)) / 1024;
-        return mib >= 1024 ? (mib / 1024).toFixed(1) + " GiB" : Math.round(mib) + " MiB";
+        // KDE's process memory attributes arrive in 1024-byte units; MB/GB are 1024-based too.
+        const mb = Math.max(0, Number(value)) / 1024;
+        return mb >= 1024 ? (mb / 1024).toFixed(1) + " GB" : Math.round(mb) + " MB";
     }
 
     function refreshProcesses() {
