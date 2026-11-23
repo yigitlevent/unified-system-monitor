@@ -651,15 +651,15 @@ Item {
 
                     Stat {
                         ui: uiStyle
-                        value: dash.vramAvailable ? Format.pct(dash.vramPct) : "--"
-                        unit: dash.vramAvailable ? "%" : ""
+                        value: dash.vramAvailable ? Format.gb(dash.vramUsed).toFixed(1) + "/" + Format.installedGb(dash.vramTotal) : "--"
+                        unit: dash.vramAvailable ? "GB" : ""
                         accent: uiStyle.vram
                     }
                     Stat {
                         ui: uiStyle
-                        value: dash.vramAvailable ? Format.gb(dash.vramUsed).toFixed(1) + "/" + Format.installedGb(dash.vramTotal) : "--"
-                        unit: dash.vramAvailable ? "GB" : ""
-                        accent: uiStyle.muted
+                        value: dash.vramAvailable ? Format.pct(dash.vramPct) : "--"
+                        unit: dash.vramAvailable ? "%" : ""
+                        accent: uiStyle.text
                     }
                 }
 
