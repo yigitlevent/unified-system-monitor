@@ -34,6 +34,7 @@ KCM.SimpleKCM {
     property bool cfg_hideChartGpuUsage: false
     property bool cfg_hideChartGpuCore: false
     property bool cfg_hideChartGpuJunction: false
+    property bool cfg_hideChartVram: false
     property bool cfg_hideChartNetwork: false
     property bool cfg_hideChartDisk: false
 
@@ -302,6 +303,11 @@ KCM.SimpleKCM {
             text: "GPU junction temperature"
             checked: !page.cfg_hideChartGpuJunction
             onToggled: page.cfg_hideChartGpuJunction = !checked
+        }
+        QQC2.CheckBox {
+            text: "VRAM"
+            checked: !page.cfg_hideChartVram
+            onToggled: page.cfg_hideChartVram = !checked
         }
         QQC2.CheckBox {
             text: "Network"

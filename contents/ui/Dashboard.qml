@@ -146,6 +146,18 @@ Item {
     // KSysGuard has no sensor for the model: cpu/all/name is just "All".
     property string cpuModel: ""
 
+    // ---- VRAM ----
+    // KSysGuard has no VRAM sensor, so the bytes come from an executable source
+    // (the command is configurable in the settings). Read once per sample tick,
+    // mirroring the Metric sampling, which keeps the chart's one-sample-per-tick
+    // assumption the Sparkline's "Xs ago" labels rely on.
+    property real vramUsed: 0
+    property real vramTotal: 0
+    property bool vramAvailable: false
+    property var vramHistory: []
+
+    readonly property real vramPct: vramTotal > 0 ? vramUsed / vramTotal * 100 : 0
+
     P5Support.DataSource {
         id: cpuInfoSource
         engine: "executable"
@@ -155,6 +167,41 @@ Item {
             disconnectSource(sourceName);
         }
     }
+
+    P5Support.DataSource {
+        id: vramData
+        engine: "executable"
+        interval: dash.tick
+        connectedSources: [dash.cfg.vramUsedSource, dash.cfg.vramTotalSource].filter(function (s) {
+            return s !== "";
+        })
+    }
+
+    function sampleVram() {
+        var data = vramData.data;
+        if (!data)
+            return;
+
+        var usedEntry = data[dash.cfg.vramUsedSource];
+        var totalEntry = data[dash.cfg.vramTotalSource];
+        var used = usedEntry ? Format.vramSum(usedEntry.stdout) : 0;
+        var total = totalEntry ? Format.vramSum(totalEntry.stdout) : 0;
+
+        if (total > 0) {
+            dash.vramTotal = total;
+            dash.vramAvailable = true;
+        }
+        dash.vramUsed = used;
+
+        if (dash.vramAvailable) {
+            var h = dash.vramHistory.slice(-59);
+            h.push(dash.vramPct);
+            dash.vramHistory = h;
+        }
+    }
+
+    onSampleCountChanged: sampleVram()
+    Component.onCompleted: sampleVram()
 
     // Labels: a custom label from settings wins, otherwise use the detected name
     readonly property string cpuLabel: cfg.cpuLabelOverride !== "" ? cfg.cpuLabelOverride : Format.cleanCpu(dash.cpuModel)
@@ -297,6 +344,7 @@ Item {
         readonly property color gpu: pick(dash.cfg.gpuColor, Theme.gpu)
         readonly property color gpuCore: pick(dash.cfg.gpuCoreColor, Theme.gpuCore)
         readonly property color gpuJunction: pick(dash.cfg.gpuJunctionColor, Theme.gpuJunction)
+        readonly property color vram: pick(dash.cfg.vramColor, Theme.vram)
         readonly property color netDown: pick(dash.cfg.netDownColor, Theme.netDown)
         readonly property color netUp: pick(dash.cfg.netUpColor, Theme.netUp)
         readonly property color diskRead: pick(dash.cfg.diskReadColor, Theme.diskRead)
@@ -338,6 +386,7 @@ Item {
         readonly property bool showGpuUsage: !dash.cfg.hideChartGpuUsage
         readonly property bool showGpuCore: !dash.cfg.hideChartGpuCore
         readonly property bool showGpuJunction: !dash.cfg.hideChartGpuJunction
+        readonly property bool showVram: !dash.cfg.hideChartVram
         readonly property bool showNetwork: !dash.cfg.hideChartNetwork
         readonly property bool showDisk: !dash.cfg.hideChartDisk
     }
@@ -581,6 +630,36 @@ Item {
                         value: gpuJunc.available ? Format.tempNumber(gpuJunc.value) : "--"
                         unit: gpuJunc.available && Format.hasTemp(gpuJunc.value) ? "°C" : ""
                         accent: uiStyle.gpuJunction
+                    }
+                }
+
+                // ---- VRAM ----
+                ChartCard {
+                    ui: uiStyle
+                    sampleInterval: dash.tick
+                    Layout.row: dash.rowOf("vram")
+                    Layout.column: dash.colOf("vram")
+                    iconName: "video-card"
+                    title: "VRAM"
+                    subtitle: dash.cfg.hideGpuSubtitle ? "" : dash.gpuLabel
+                    showChart: uiStyle.showVram
+                    seriesData: [dash.vramHistory]
+                    seriesColors: [uiStyle.vram]
+                    capacity: 60
+                    labelFormatter: Format.percentLabel
+                    maxValue: 100
+
+                    Stat {
+                        ui: uiStyle
+                        value: dash.vramAvailable ? Format.pct(dash.vramPct) : "--"
+                        unit: dash.vramAvailable ? "%" : ""
+                        accent: uiStyle.vram
+                    }
+                    Stat {
+                        ui: uiStyle
+                        value: dash.vramAvailable ? Format.gb(dash.vramUsed).toFixed(1) + "/" + Format.installedGb(dash.vramTotal) : "--"
+                        unit: dash.vramAvailable ? "GB" : ""
+                        accent: uiStyle.muted
                     }
                 }
 

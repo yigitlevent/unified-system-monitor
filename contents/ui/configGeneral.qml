@@ -18,6 +18,8 @@ KCM.SimpleKCM {
     property alias cfg_gpuIndex: gpuIndex.value
     property alias cfg_gpuTempSensor: gpuTemp.text
     property alias cfg_gpuJunctionSensor: gpuJunction.text
+    property alias cfg_vramUsedSource: vramUsedCmd.text
+    property alias cfg_vramTotalSource: vramTotalCmd.text
     property alias cfg_diskId: diskId.text
     property alias cfg_diskLabel: diskLabel.text
 
@@ -114,6 +116,29 @@ KCM.SimpleKCM {
             Layout.minimumWidth: Kirigami.Units.gridUnit * 20
             placeholderText: "e.g. lmsensors/amdgpu-pci-.../temp2 (empty = hide)"
             Kirigami.FormData.label: "Junction temp sensor ID:"
+        }
+
+        Item {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: "VRAM"
+        }
+
+        QQC2.TextField {
+            id: vramUsedCmd
+            Layout.minimumWidth: Kirigami.Units.gridUnit * 20
+            placeholderText: "cat /sys/class/drm/card*/device/mem_info_vram_used"
+            Kirigami.FormData.label: "Used bytes command:"
+        }
+        QQC2.TextField {
+            id: vramTotalCmd
+            Layout.minimumWidth: Kirigami.Units.gridUnit * 20
+            placeholderText: "cat /sys/class/drm/card*/device/mem_info_vram_total"
+            Kirigami.FormData.label: "Total bytes command:"
+        }
+        QQC2.Label {
+            text: "Run every update interval. Each line of stdout is summed (so a card* glob over several GPUs reports the combined usage). The card shows a dash until the first reading."
+            font: Kirigami.Theme.smallFont
+            opacity: 0.7
         }
 
         Item {

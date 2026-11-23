@@ -20,6 +20,7 @@ KCM.SimpleKCM {
     property string cfg_gpuColor: ""
     property string cfg_gpuCoreColor: ""
     property string cfg_gpuJunctionColor: ""
+    property string cfg_vramColor: ""
     property string cfg_netDownColor: ""
     property string cfg_netUpColor: ""
     property string cfg_diskReadColor: ""
@@ -31,28 +32,105 @@ KCM.SimpleKCM {
     // One row per colour setting. `key` names both the cfg_<key>Color property
     // above and its default in Theme.js.
     readonly property var surfaceFields: [
-        { key: "panel", label: "Main box background:", alpha: true },
-        { key: "card", label: "Card background:", alpha: true },
-        { key: "border", label: "Borders:", alpha: true },
-        { key: "text", label: "Text:", alpha: false },
-        { key: "muted", label: "Secondary text:", alpha: false }
+        {
+            key: "panel",
+            label: "Main box background:",
+            alpha: true
+        },
+        {
+            key: "card",
+            label: "Card background:",
+            alpha: true
+        },
+        {
+            key: "border",
+            label: "Borders:",
+            alpha: true
+        },
+        {
+            key: "text",
+            label: "Text:",
+            alpha: false
+        },
+        {
+            key: "muted",
+            label: "Secondary text:",
+            alpha: false
+        }
     ]
     readonly property var accentFields: [
-        { key: "cpu", label: "CPU usage:", alpha: false },
-        { key: "cpuTemp", label: "CPU temp:", alpha: false },
-        { key: "ram", label: "RAM:", alpha: false },
-        { key: "gpu", label: "GPU usage:", alpha: false },
-        { key: "gpuCore", label: "GPU core temp:", alpha: false },
-        { key: "gpuJunction", label: "GPU junction temp:", alpha: false },
-        { key: "netDown", label: "Download:", alpha: false },
-        { key: "netUp", label: "Upload:", alpha: false },
-        { key: "diskRead", label: "Disk read:", alpha: false },
-        { key: "diskWrite", label: "Disk write:", alpha: false }
+        {
+            key: "cpu",
+            label: "CPU usage:",
+            alpha: false
+        },
+        {
+            key: "cpuTemp",
+            label: "CPU temp:",
+            alpha: false
+        },
+        {
+            key: "ram",
+            label: "RAM:",
+            alpha: false
+        },
+        {
+            key: "gpu",
+            label: "GPU usage:",
+            alpha: false
+        },
+        {
+            key: "gpuCore",
+            label: "GPU core temp:",
+            alpha: false
+        },
+        {
+            key: "gpuJunction",
+            label: "GPU junction temp:",
+            alpha: false
+        },
+        {
+            key: "vram",
+            label: "VRAM:",
+            alpha: false
+        },
+        {
+            key: "netDown",
+            label: "Download:",
+            alpha: false
+        },
+        {
+            key: "netUp",
+            label: "Upload:",
+            alpha: false
+        },
+        {
+            key: "diskRead",
+            label: "Disk read:",
+            alpha: false
+        },
+        {
+            key: "diskWrite",
+            label: "Disk write:",
+            alpha: false
+        }
     ]
     readonly property var barFields: [
-        { key: "barLow", label: "Low load:", alpha: false },
-        { key: "barMid", label: "Medium load:", alpha: false },
-        { key: "barHigh", label: "High load:", alpha: false }
+        {
+            key: "barLow",
+            label: "Low load:",
+            alpha: false
+        },
+        {
+            key: "barMid",
+            label: "Medium load:",
+            alpha: false
+        },
+        {
+            key: "barHigh",
+            label: "High load:",
+            alpha: false
+        }
     ]
 
     // A colour setting row, built from one entry of the tables above

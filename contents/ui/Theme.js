@@ -18,6 +18,7 @@ var ram = "#00aa00";
 var gpu = "#ff9a3c";
 var gpuCore = "#ff9a3c";
 var gpuJunction = "#ff9a3c";
+var vram = "#ff9a3c";
 var netDown = "#2f9bff";
 var netUp = "#b366ff";
 var diskRead = "#2f9bff";

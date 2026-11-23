@@ -2,7 +2,7 @@
 
 // Every dashboard card, in the default order, with the name the settings show.
 // Shared by the Dashboard and the Layout settings page.
-var keys = ["cpuUsage", "cpuTemp", "ram", "cores", "gpuUsage", "gpuCore", "gpuJunction", "network", "disk", "processMonitor"];
+var keys = ["cpuUsage", "cpuTemp", "ram", "cores", "gpuUsage", "gpuCore", "gpuJunction", "vram", "network", "disk", "processMonitor"];
 
 var names = {
   cpuUsage: "CPU Usage",
@@ -12,6 +12,7 @@ var names = {
   gpuUsage: "GPU Usage",
   gpuCore: "GPU Core Temperature",
   gpuJunction: "GPU Junction Temperature",
+  vram: "VRAM",
   network: "Network",
   disk: "Disk I/O",
   processMonitor: "Process Monitor"

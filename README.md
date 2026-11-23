@@ -38,6 +38,7 @@ Right-click the widget -> **Configure**. Sensor IDs differ between machines. Ope
 | GPU number | `0` -> the `gpu/gpu0/...` sensors; set `1` for `gpu1` on a second GPU (e.g. dGPU next to an iGPU) |
 | GPU core temp | *(empty)* -> `gpu/gpuN/temperature` of the chosen GPU |
 | GPU junction temp | *(empty — set it to your amdgpu hwmon sensor)* |
+| VRAM used / total | `cat /sys/class/drm/card*/device/mem_info_vram_used` / `..._total`; run every update, stdout lines are summed, so the `card*` glob reports combined usage on multi-GPU setups |
 | Disk | `all` -> `disk/all/read` / `disk/all/write`; use a device id for a single drive |
 | CPU / GPU label | Detected from `/proc/cpuinfo` (CPU) and the `gpu/gpuN/name` sensor (GPU); use *Custom CPU/GPU label* in settings to override |
 | Logical threads | Detected automatically from `cpu/all/coreCount`, then one bar per `cpu/cpuN/usage` |

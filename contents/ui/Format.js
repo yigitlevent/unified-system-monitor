@@ -127,6 +127,20 @@ function hasTemp(v) {
   return (Number(v) || 0) > 0;
 }
 
+// stdout of `cat /sys/class/drm/card*/device/mem_info_vram_used` — one line per
+// matching GPU, each a byte count ("1234567890\n"). Sums every numeric line, so
+// a card* glob over several GPUs reports the combined total.
+function vramSum(text) {
+  var total = 0;
+  var lines = String(text || "").split(/\r?\n/);
+  for (var i = 0; i < lines.length; i++) {
+    var n = parseFloat(lines[i]);
+    if (isFinite(n) && n >= 0)
+      total += n;
+  }
+  return total;
+}
+
 // Temperature as a bare number ("52") or "--" when the sensor has no reading
 function tempNumber(v) {
   return hasTemp(v) ? String(Math.round(Number(v))) : "--";
