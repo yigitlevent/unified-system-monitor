@@ -504,11 +504,13 @@ Item {
                     iconName: "memory"
                     title: "RAM"
                     showChart: uiStyle.showRam
-                    seriesData: [ram.history]
+                    // The sensor reports bytes; the chart scales them to % of total.
+                    // seriesData is an array of series, so the converted history goes in [ ].
+                    seriesData: [Format.pctSeries(ram.history, ramTotal.value)]
                     seriesColors: [uiStyle.ram]
                     capacity: ram.capacity
-                    labelFormatter: Format.gbLabel
-                    maxValue: Format.installedGb(ramTotal.value) * 1073741824
+                    labelFormatter: Format.percentLabel
+                    maxValue: 100
 
                     Stat {
                         ui: uiStyle

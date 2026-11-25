@@ -39,6 +39,32 @@ function pct(v) {
   return Math.round(Number(v) || 0);
 }
 
+// used/total bytes -> percentage of total. NaN when either is missing, so a sensor
+// with no reading stays a gap in the chart rather than a misleading 0.
+function pctOf(used, total) {
+  var u = Number(used);
+  var t = Number(total);
+  return (isFinite(u) && isFinite(t) && t > 0) ? u / t * 100 : NaN;
+}
+
+// Largest finite value in a history buffer (0 when it is empty or all gaps).
+function maxOf(values) {
+  var m = 0;
+  for (var i = 0; i < values.length; i++)
+    if (isFinite(values[i]) && values[i] > m)
+      m = values[i];
+  return m;
+}
+
+// History of used bytes -> history of percentages of `total` (NaN gaps stay gaps).
+// Returns a single series; wrap it in [ ] when passing to Sparkline.seriesData.
+function pctSeries(values, total) {
+  var out = [];
+  for (var i = 0; i < values.length; i++)
+    out.push(pctOf(values[i], total));
+  return out;
+}
+
 // "AMD Ryzen 9 5900X 12-Core Processor" -> "Ryzen 9 5900X"
 // "Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz" -> "Core i7-8700K"
 // "12th Gen Intel(R) Core(TM) i7-12700K" -> "Core i7-12700K"
@@ -119,7 +145,6 @@ function trim1(n) {
 // Axis label formatters (used by Sparkline.labelFormatter)
 function percentLabel(v) { return trim1(v) + "%"; }
 function tempLabel(v) { return trim1(v) + "°C"; }
-function gbLabel(v) { return trim1(gb(v)) + " GB"; }
 function rateLabel(v) { var r = rate(v); return String(parseFloat(r.value)) + " " + r.unit; }
 
 // Sensors report 0 when they have no reading, so only > 0 counts as a temperature
